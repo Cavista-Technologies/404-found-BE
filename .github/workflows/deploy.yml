@@ -1,0 +1,30 @@
+name: Deploy to SmarterASP
+on:
+ push:
+   branches: [main]
+ workflow_dispatch:
+jobs:
+ deploy:
+   runs-on: windows-latest
+   steps:
+     - uses: actions/checkout@v4
+     - uses: actions/setup-dotnet@v4
+       with:
+         dotnet-version: '8.0.x'
+     - run: dotnet restore ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj
+     - run: dotnet build ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj -c Release --no-restore
+     - run: dotnet publish ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj -c Release --no-build -o ${{ github.workspace }}\publish
+     - name: Web Deploy
+       shell: pwsh
+       run: |
+         $msdeploy = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+& $msdeploy `
+           -verb:sync `
+           -source:contentPath="${{ github.workspace }}\publish" `
+           -dest:contentPath="${{ secrets.ASP_SITE_NAME }}",computerName="${{ secrets.ASP_MSDEPLOY_URL }}",userName="${{ secrets.ASP_USER }}",password="${{ secrets.ASP_PASSWORD }}",authType="Basic" `
+           -enableRule:AppOffline `
+           -enableRule:DoNotDeleteRule `
+           -allowUntrusted `
+           -retryAttempts:5 `
+           -retryInterval:3000
+         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
