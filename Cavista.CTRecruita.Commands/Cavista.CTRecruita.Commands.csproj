@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.12" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cavista.CTRecruita.Data\Cavista.CTRecruita.Data.csproj" />
+    <ProjectReference Include="..\Cavista.CTRecruita.Services\Cavista.CTRecruita.Services.csproj" />
+    <ProjectReference Include="..\Cavista.CTRecruita.Utilities\Cavista.CTRecruita.Utilities.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

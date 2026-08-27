@@ -1,0 +1,6 @@
+@Cavista.CTRecruita.Web_HostAddress = http://localhost:5282
+
+GET {{Cavista.CTRecruita.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
