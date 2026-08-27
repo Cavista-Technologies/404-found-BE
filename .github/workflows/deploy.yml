@@ -19,7 +19,20 @@ jobs:
        run: |
          $path = "${{ github.workspace }}\publish\appsettings.Production.json"
          $json = Get-Content $path -Raw | ConvertFrom-Json
-         $json.ConnectionStrings.DefaultConnection = "${{ secrets.PROD_CONNECTION_STRING }}"
+         function Set-IfPresent($obj, $prop, $value) {
+           if ([string]::IsNullOrWhiteSpace($value)) { return }
+           if ($null -eq $obj) { return }
+           if ($obj.PSObject.Properties.Name -notcontains $prop) { return }
+           $obj.$prop = $value
+         }
+         Set-IfPresent $json.ConnectionStrings 'DefaultConnection'  '${{ secrets.PROD_DEFAULT_CONN }}'
+         Set-IfPresent $json.ConnectionStrings 'ReadOnlyConnection' '${{ secrets.PROD_READONLY_CONN }}'
+         Set-IfPresent $json.ConnectionStrings 'HangfireConn'       '${{ secrets.PROD_HANGFIRE_CONN }}'
+         Set-IfPresent $json.SeriLog           'ConnectionString'   '${{ secrets.PROD_SERILOG_CONN }}'
+         Set-IfPresent $json.JWT               'SigningKey'         '${{ secrets.PROD_JWT_SIGNING_KEY }}'
+         Set-IfPresent $json.HangfireAuth      'Username'           '${{ secrets.PROD_HANGFIRE_USER }}'
+         Set-IfPresent $json.HangfireAuth      'Password'           '${{ secrets.PROD_HANGFIRE_PASS }}'
+         Set-IfPresent $json.Encrpyt           'Key'                '${{ secrets.PROD_ENCRYPT_KEY }}'
          $json | ConvertTo-Json -Depth 10 | Set-Content $path
      - name: Web Deploy
        shell: pwsh
