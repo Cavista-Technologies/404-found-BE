@@ -14,6 +14,13 @@ jobs:
      - run: dotnet restore ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj
      - run: dotnet build ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj -c Release --no-restore
      - run: dotnet publish ./Cavista.CTRecruita.Web/Cavista.CTRecruita.Web.csproj -c Release --no-build -o ${{ github.workspace }}\publish
+     - name: Inject production config
+       shell: pwsh
+       run: |
+         $path = "${{ github.workspace }}\publish\appsettings.Production.json"
+         $json = Get-Content $path -Raw | ConvertFrom-Json
+         $json.ConnectionStrings.DefaultConnection = "${{ secrets.PROD_CONNECTION_STRING }}"
+         $json | ConvertTo-Json -Depth 10 | Set-Content $path
      - name: Web Deploy
        shell: pwsh
        run: |
