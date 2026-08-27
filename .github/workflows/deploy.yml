@@ -18,13 +18,6 @@ jobs:
        shell: pwsh
        run: |
          $msdeploy = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-& $msdeploy `
-           -verb:sync `
-           -source:contentPath="${{ github.workspace }}\publish" `
-           -dest:contentPath="${{ secrets.ASP_SITE_NAME }}",computerName="${{ secrets.ASP_MSDEPLOY_URL }}",userName="${{ secrets.ASP_USER }}",password="${{ secrets.ASP_PASSWORD }}",authType="Basic" `
-           -enableRule:AppOffline `
-           -enableRule:DoNotDeleteRule `
-           -allowUntrusted `
-           -retryAttempts:5 `
-           -retryInterval:3000
+         $dest = "contentPath=${{ secrets.ASP_SITE_NAME }},computerName=${{ secrets.ASP_MSDEPLOY_URL }},userName=${{ secrets.ASP_USER }},password=${{ secrets.ASP_PASSWORD }},authType=Basic"
+& $msdeploy -verb:sync -source:contentPath="${{ github.workspace }}\publish" -dest:$dest -enableRule:AppOffline -enableRule:DoNotDeleteRule -allowUntrusted -retryAttempts:5 -retryInterval:3000
          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
