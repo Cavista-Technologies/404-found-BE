@@ -1,4 +1,7 @@
-﻿using Cavista.CTRecruita.Utilities.Mediator.Contracts;
+﻿using Cavista.CTRecruita.Commands.Auth;
+using Cavista.CTRecruita.Queries.Departments;
+using Cavista.CTRecruita.Utilities.Mediator.Contracts;
+using Cavista.CTRecruita.Utilities.Mediator.Implementation;
 using System.Reflection;
 
 namespace Cavista.CTRecruita.Web.Extensions
@@ -40,9 +43,9 @@ namespace Cavista.CTRecruita.Web.Extensions
 
         public static IServiceCollection AddMediatR(this IServiceCollection services)
         {
-            //services.AddScoped<IMediator, Sender>();
-            //services.AddMediatRHandlersFromAssemblies(typeof(LoginCommand).Assembly);
-            //services.AddMediatRHandlersFromAssemblies(typeof(GetActivityLogsQuery).Assembly);
+            services.AddScoped<IMediator, Sender>();
+            services.AddMediatRHandlersFromAssemblies(typeof(LoginCommand).Assembly);
+            services.AddMediatRHandlersFromAssemblies(typeof(GetDepartmentsQuery).Assembly);
 
             return services;
         }

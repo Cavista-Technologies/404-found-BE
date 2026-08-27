@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
-namespace Cavista.CTRecruita.Web.Auth
+namespace Cavista.CTRecruita.Web.Controllers.Auth
 {
     [Route("auth")]
     [ApiController]

@@ -1,10 +1,5 @@
 ﻿using Cavista.CTRecruita.Data.Entities.BaseEntites;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+using Cavista.CTRecruita.Data.Entities.Roles;
 
 namespace Cavista.CTRecruita.Data.Entities.Forms
 {

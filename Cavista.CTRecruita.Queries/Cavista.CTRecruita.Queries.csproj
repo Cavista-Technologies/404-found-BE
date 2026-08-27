@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.12" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Cavista.CTRecruita.Data\Cavista.CTRecruita.Data.csproj" />
     <ProjectReference Include="..\Cavista.CTRecruita.Services\Cavista.CTRecruita.Services.csproj" />
     <ProjectReference Include="..\Cavista.CTRecruita.Utilities\Cavista.CTRecruita.Utilities.csproj" />

@@ -12,7 +12,7 @@ namespace Cavista.CTRecruita.Commands.Forms
 {
     public class CreateApplicationFormCommand : IRequest<ApiResponse>
     {
-        public long JobId { get; set; }
+        public long JobRoleId { get; set; }
         public string Title { get; set; }
         public string IntroMessage { get; set; }
         public List<FormFieldDto> Fields { get; set; }
@@ -36,15 +36,15 @@ namespace Cavista.CTRecruita.Commands.Forms
         }
         public async Task<ApiResponse> Handle(CreateApplicationFormCommand request, CancellationToken cancellationToken)
         {
-            var job = await _context.Jobs.FirstOrDefaultAsync(x => x.Id == request.JobId, cancellationToken);
+            var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
             if (job is null)
                 return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Job not found");
-            var exists = await _context.ApplicationForms.AnyAsync(f => f.JobId == request.JobId, cancellationToken);
+            var exists = await _context.ApplicationForms.AnyAsync(f => f.JobRoleId == request.JobRoleId, cancellationToken);
             if (exists)
                 return new ApiResponse(true, (int)StatusCodes.Status409Conflict, "This job already has an application form");
             var form = new ApplicationForm
             {
-                JobId = request.JobId,
+                JobRoleId = request.JobRoleId,
                 Title = request.Title,
                 IntroMessage = request.IntroMessage,
                 Status = FormStatus.Draft,
@@ -53,9 +53,9 @@ namespace Cavista.CTRecruita.Commands.Forms
             };
             _context.ApplicationForms.Add(form);
             await _context.SaveChangesAsync(cancellationToken);
-            return new ApiResponse(false, (int)StatusCodes.Status201Created, "Form created", new { form.Id, form.Slug, form.Status });
+            return new ApiResponse(false, (int)StatusCodes.Status201Created, "Form created successfully");
         }
-        private FormFields MapField(FormFieldDto f) => new FormFields
+        private FormField MapField(FormFieldDto f) => new FormField
         {
             Label = f.Label,
             Placeholder = f.Placeholder,

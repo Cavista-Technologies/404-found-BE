@@ -1,5 +1,6 @@
 using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Auth;
+using Cavista.CTRecruita.Data.Seeder;
 using Cavista.CTRecruita.Utilities.Configurations;
 using Cavista.CTRecruita.Utilities.Emailer;
 using Cavista.CTRecruita.Web.Extensions;
@@ -195,7 +196,7 @@ using (var scope = app.Services.CreateScope())
         database.Database.Migrate();
     }
 
-    //Seeder.SeedEmployer(contextFactory);
+    Seeder.SeedAsync(app.Services);
 }
 // Configure the HTTP request pipeline.
 /* if (app.Environment.IsDevelopment())
