@@ -187,6 +187,7 @@ builder.Services.AddSwaggerGen(o =>
 });
 
 var app = builder.Build();
+app.UseDeveloperExceptionPage();
 app.UseStaticFiles();
 using (var scope = app.Services.CreateScope())
 {
