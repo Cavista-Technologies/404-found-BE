@@ -65,7 +65,10 @@ namespace Cavista.CTRecruita.Commands.Auth
                new(ClaimTypes.NameIdentifier, user.UserName ?? string.Empty),
                new(ClaimTypes.Email, user.Email!),
                new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
-               new("UserId", user.Id.ToString())
+               new("UserId", user.Id.ToString()),
+               new("UserName", user.UserName ?? string.Empty),
+               new("FullName", $"{user.FirstName} {user.LastName}"),
+               new("UserRole", roles.FirstOrDefault() ?? string.Empty)
            };
             foreach (var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
