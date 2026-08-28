@@ -31,6 +31,7 @@ namespace Cavista.CTRecruita.Commands.Auth
         public string Token { get; set; }
         public string RefreshToken { get; set; }
         public string Username { get; set; }
+        public string Role { get; set; }
     }
     public class LoginHandler : IRequestHandler<LoginCommand, ApiResponse>
     {
@@ -85,7 +86,8 @@ namespace Cavista.CTRecruita.Commands.Auth
                 TokenExpiration = token.ValidTo,
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 RefreshToken = refreshToken,
-                Username = user.UserName!
+                Username = user.UserName!,
+                Role = roles.FirstOrDefault() ?? string.Empty
             };
         }
     }
