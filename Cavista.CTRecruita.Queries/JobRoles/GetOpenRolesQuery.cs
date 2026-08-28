@@ -1,0 +1,58 @@
+﻿using Cavista.CTRecruita.Data.Contexts;
+using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Utilities.ApiResponse;
+using Cavista.CTRecruita.Utilities.Mediator.Contracts;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+
+namespace Cavista.CTRecruita.Queries.JobRoles
+{
+    public class GetOpenRolesQuery : IRequest<ApiResponse>
+    {
+        public string Search { get; set; }
+        public long? DepartmentId { get; set; }
+        public JobStatus? Status { get; set; }
+    }
+    public class GetOpenRolesHandler : IRequestHandler<GetOpenRolesQuery, ApiResponse>
+    {
+        private readonly ApplicationReadOnlyContext _context;
+        public GetOpenRolesHandler(ApplicationReadOnlyContext context)
+        {
+            _context = context;
+        }
+        public async Task<ApiResponse> Handle(GetOpenRolesQuery request, CancellationToken cancellationToken)
+        {
+            var query = _context.JobRoles
+                .Include(x => x.Department)
+                .Where(x => !x.IsDeleted)
+                .AsQueryable();
+            if (!string.IsNullOrWhiteSpace(request.Search))
+                query = query.Where(x => x.Title.Contains(request.Search));
+            if (request.DepartmentId.HasValue)
+                query = query.Where(x => x.DepartmentId == request.DepartmentId.Value);
+            if (request.Status.HasValue)
+                query = query.Where(x => x.Status == request.Status.Value);
+            var roles = await query
+                .OrderByDescending(x => x.CreatedAt)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.Title,
+                    Department = x.Department.Name,
+                    x.EmploymentType,
+                    x.Status,
+                    x.Priority,
+                    x.NumberOfOpenings,
+                    x.SlaTargetDays,
+                    x.TargetHireDate,
+                    //SlaPercent = x.SlaTargetDays > 0
+                    //    ? Math.Min(100, (int)(EF.Functions.DateDiffDay(x.CreatedAt, DateTime.UtcNow) * 100.0 / x.SlaTargetDays))
+                    //    : 0,
+                    PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
+                    ApplicantsCount = x.Applications.Count()
+                })
+                .ToListAsync(cancellationToken);
+            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
+        }
+    }
+}

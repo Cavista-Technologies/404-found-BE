@@ -1,4 +1,6 @@
 ﻿using Cavista.CTRecruita.Commands.Roles;
+using Cavista.CTRecruita.Queries.Departments;
+using Cavista.CTRecruita.Queries.JobRoles;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -34,5 +36,26 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
         }
+
+        [HttpGet("open-roles")]
+        public async Task<IActionResult> GetOpenRoles()
+        {
+            var departments = await _mediator.Send(new GetOpenRolesQuery { });
+
+            return PrepareResponse(departments);
+
+        }
+
+        [HttpGet("open-roles/{id}")]
+        public async Task<IActionResult> GetAnOpenRoles(long id)
+        {
+            var departments = await _mediator.Send(new GetRoleDetailQuery
+            {
+                Id = id
+            });
+
+            return PrepareResponse(departments);
+        }
+
     }
 }
