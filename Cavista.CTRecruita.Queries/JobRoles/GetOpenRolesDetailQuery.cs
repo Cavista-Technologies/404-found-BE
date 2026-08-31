@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +11,31 @@ namespace Cavista.CTRecruita.Queries.JobRoles
     public class GetRoleDetailQuery : IRequest<ApiResponse>
     {
         public long Id { get; set; }
+    }
+
+    public class GetRoleDetailQueryModel
+    {
+        public long Id { get; set; }
+        public string Title { get; set; }
+        public string Department { get; set; }
+        public EmploymentType EmploymentType { get; set; }
+        public string EmploymentTypeStr { get; set; }
+        public JobStatus Status { get; set; }
+        public string StatusStr { get; set; }
+        public  JobPriority Priority { get; set; }
+        public string PriorityStr { get; set; }
+        public int NumberOfOpenings { get; set; }
+        public int SlaTargetDays { get; set; }
+        public DateTime? TargetHireDate { get; set; }
+        public int SlaPercent { get; set; }
+        public string RecruiterName { get; set; }
+        public string RecruiterEmail { get; set; }
+        public string HiringManagerName { get; set; }
+        public string HiringManagerEmail { get; set; }
+        public string SalaryRange { get; set; }
+        public string Location { get; set; }
+        public int ApplicantsCount { get; set; }
+        public Dictionary<string, List<object>> Pipeline { get; set; } = new();
     }
     public class GetRoleDetailHandler : IRequestHandler<GetRoleDetailQuery, ApiResponse>
     {
@@ -43,24 +69,28 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                         a.Source
                     }).ToList<object>()
                 );
-            var result = new
+
+            var result = new GetRoleDetailQueryModel
             {
-                role.Id,
-                role.Title,
+                Id = role.Id,
+                Title = role.Title,
                 Department = role.Department.Name,
-                role.EmploymentType,
-                role.Status,
-                role.Priority,
-                role.NumberOfOpenings,
-                role.SlaTargetDays,
-                role.TargetHireDate,
+                EmploymentType = role.EmploymentType,
+                EmploymentTypeStr = role.EmploymentType.GetDescription(),
+                Status = role.Status,
+                StatusStr = role.Status.GetDescription(),
+                Priority = role.Priority,
+                PriorityStr = role.Priority.GetDescription(),
+                NumberOfOpenings = role.NumberOfOpenings,
+                SlaTargetDays = role.SlaTargetDays,
+                TargetHireDate = role.TargetHireDate,
                 SlaPercent = slaPercent,
-                role.RecruiterName,
-                role.RecruiterEmail,
-                role.HiringManagerName,
-                role.HiringManagerEmail,
-                role.SalaryRange,
-                role.Location,
+                RecruiterName = role.RecruiterName,
+                RecruiterEmail = role.RecruiterEmail,
+                HiringManagerName = role.HiringManagerName,
+                HiringManagerEmail = role.HiringManagerEmail,
+                SalaryRange = role.SalaryRange,
+                Location = role.Location,
                 ApplicantsCount = role.Applications.Count,
                 Pipeline = pipeline
             };

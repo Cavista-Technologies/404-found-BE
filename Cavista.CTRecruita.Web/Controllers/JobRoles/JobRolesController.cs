@@ -1,4 +1,5 @@
 ﻿using Cavista.CTRecruita.Commands.Roles;
+using Cavista.CTRecruita.Data.Entities.Enums;
 using Cavista.CTRecruita.Queries.Departments;
 using Cavista.CTRecruita.Queries.JobRoles;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
@@ -38,11 +39,16 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
         }
 
         [HttpGet("open-roles")]
-        public async Task<IActionResult> GetOpenRoles()
+        public async Task<IActionResult> GetOpenRoles([FromQuery] JobStatus? jobStatus, [FromQuery] long? departmentId, [FromQuery] string? searchString = null)
         {
-            var departments = await _mediator.Send(new GetOpenRolesQuery { });
+            var roles = await _mediator.Send( new  GetOpenRolesQuery 
+            {
+                Status = jobStatus,
+                DepartmentId = departmentId,
+                Search = searchString
+            });
 
-            return PrepareResponse(departments);
+            return PrepareResponse(roles);
 
         }
 
