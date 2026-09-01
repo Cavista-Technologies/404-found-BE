@@ -26,7 +26,8 @@ namespace Cavista.CTRecruita.Data.Entities.Enums
     { 
         Direct = 1, 
         LinkedIn, 
-        JobBoard, 
+        CareersPage, 
+        Indeed,
         Referral, 
         Twitter, 
         Email, 

@@ -26,6 +26,8 @@ namespace Cavista.CTRecruita.Data.Entities.Roles
         public string HiringManagerEmail { get; set; }
         public JobPriority Priority { get; set; } = JobPriority.Normal;
         public DateTime? TargetHireDate { get; set; }   
+        public DateTime? FilledAt { get; set; }   
+        public DateTime? PublishedAt { get; set; }   
         public int SlaTargetDays { get; set; }
         public string SalaryRange { get; set; }
         public string Reason { get; set; }

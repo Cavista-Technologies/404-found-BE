@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
@@ -12,6 +13,24 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string Search { get; set; }
         public long? DepartmentId { get; set; }
         public JobStatus? Status { get; set; }
+    }
+
+    public class GetOpenRolesModel
+    {
+        public long Id { get; set; }
+        public string Title { get; set; }
+        public string Department { get; set; }
+        public EmploymentType EmploymentType { get; set; }
+        public string EmploymentTypeStr { get; set; }
+        public JobStatus Status { get; set; }
+        public string StatusStr { get; set; }
+        public JobPriority Priority { get; set; }
+        public string PriorityStr { get; set; }
+        public int NumberOfOpenings { get; set; }
+        public int SlaTargetDays { get; set; }
+        public DateTime? TargetHireDate { get; set; }
+        public int PipelineCount { get; set; }
+        public int ApplicantsCount { get; set; }
     }
     public class GetOpenRolesHandler : IRequestHandler<GetOpenRolesQuery, ApiResponse>
     {
@@ -34,20 +53,23 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 query = query.Where(x => x.Status == request.Status.Value);
             var roles = await query
                 .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new
-                {
-                    x.Id,
-                    x.Title,
+                .Select(x => new GetOpenRolesModel
+                 {
+                    Id = x.Id,
+                    Title = x.Title,
                     Department = x.Department.Name,
-                    x.EmploymentType,
-                    x.Status,
-                    x.Priority,
-                    x.NumberOfOpenings,
-                    x.SlaTargetDays,
-                    x.TargetHireDate,
+                    EmploymentType = x.EmploymentType,
+                    EmploymentTypeStr = x.EmploymentType.GetDescription(),
+                    Status = x.Status,
+                    StatusStr = x.Status.GetDescription(),
+                    Priority = x.Priority,
+                    PriorityStr = x.Priority.GetDescription(),
+                    NumberOfOpenings = x.NumberOfOpenings,
+                    SlaTargetDays = x.SlaTargetDays,
                     //SlaPercent = x.SlaTargetDays > 0
                     //    ? Math.Min(100, (int)(EF.Functions.DateDiffDay(x.CreatedAt, DateTime.UtcNow) * 100.0 / x.SlaTargetDays))
                     //    : 0,
+                    TargetHireDate = x.TargetHireDate,
                     PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
                     ApplicantsCount = x.Applications.Count()
                 })

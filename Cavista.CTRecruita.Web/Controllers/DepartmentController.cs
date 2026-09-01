@@ -1,8 +1,6 @@
 ﻿using Cavista.CTRecruita.Commands.Departments;
-using Cavista.CTRecruita.Commands.Forms;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cavista.CTRecruita.Web.Controllers

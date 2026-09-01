@@ -25,6 +25,8 @@ namespace Cavista.CTRecruita.Commands.Roles
             var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
             if (job is null)
                 return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Job not found");
+            if (request.Status == JobStatus.Filled && job.FilledAt == null)
+                job.FilledAt = DateTime.UtcNow;
             job.Status = request.Status;
             job.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
