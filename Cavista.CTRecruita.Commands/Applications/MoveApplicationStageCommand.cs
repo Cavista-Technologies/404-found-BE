@@ -6,11 +6,12 @@ using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cavista.CTRecruita.Commands.Application
+namespace Cavista.CTRecruita.Commands.Applications
 {
     public class MoveApplicationStageCommand : IRequest<ApiResponse>
     {
         public long ApplicationId { get; set; }
+        public long CurrentUserId { get; set; }
         public ApplicationStage ToStage { get; set; }
         public string Reason { get; set; }
     }
@@ -28,6 +29,7 @@ namespace Cavista.CTRecruita.Commands.Application
                 .FirstOrDefaultAsync(x => x.Id == request.ApplicationId, cancellationToken);
             if (application == null)
                 return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Application not found");
+
             var fromStage = application.Stage;
             application.Stage = request.ToStage;
             if (request.ToStage == ApplicationStage.Hired)
@@ -36,14 +38,15 @@ namespace Cavista.CTRecruita.Commands.Application
                 application.Status = ApplicationStatus.Rejected;
             else if (request.ToStage == ApplicationStage.Withdrawn)
                 application.Status = ApplicationStatus.Withdrawn;
+
             application.StageHistory.Add(new ApplicationStageHistory
             {
                 ApplicationId = application.Id,
                 FromStage = fromStage,
                 ToStage = request.ToStage,
                 Reason = request.Reason,
-                ChangedOn = DateTime.UtcNow
-                // ChangedById = current user id — wire once you have the current-user service
+                ChangedOn = DateTime.UtcNow,
+                ChangedById = request.CurrentUserId
             });
             await _context.SaveChangesAsync(cancellationToken);
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Application moved");

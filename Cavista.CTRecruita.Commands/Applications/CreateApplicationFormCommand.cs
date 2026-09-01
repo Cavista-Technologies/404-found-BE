@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
-namespace Cavista.CTRecruita.Commands.Forms
+namespace Cavista.CTRecruita.Commands.Applications
 {
     public class CreateApplicationFormCommand : IRequest<ApiResponse>
     {
@@ -38,10 +38,10 @@ namespace Cavista.CTRecruita.Commands.Forms
         {
             var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
             if (job is null)
-                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Job not found");
+                return new ApiResponse(true, StatusCodes.Status404NotFound, "Job not found");
             var exists = await _context.ApplicationForms.AnyAsync(f => f.JobRoleId == request.JobRoleId, cancellationToken);
             if (exists)
-                return new ApiResponse(true, (int)StatusCodes.Status409Conflict, "This job already has an application form");
+                return new ApiResponse(true, StatusCodes.Status409Conflict, "This job already has an application form");
             var form = new ApplicationForm
             {
                 JobRoleId = request.JobRoleId,
@@ -53,7 +53,7 @@ namespace Cavista.CTRecruita.Commands.Forms
             };
             _context.ApplicationForms.Add(form);
             await _context.SaveChangesAsync(cancellationToken);
-            return new ApiResponse(false, (int)StatusCodes.Status201Created, "Form created successfully");
+            return new ApiResponse(false, StatusCodes.Status201Created, "Form created successfully");
         }
         private FormField MapField(FormFieldDto f) => new FormField
         {

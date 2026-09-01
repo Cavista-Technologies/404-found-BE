@@ -17,12 +17,58 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
         public JobRolesController(IMediator mediator) : base(mediator)
         {
         }
+
         [HttpPost("create")]
         public async Task<IActionResult> Create(CreateJobCommand command)
         {
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
+           
         }
+
+        [HttpPost("publish/{id}")]
+        public async Task<IActionResult> PublishJobRole(long id)
+        {
+            var response = await _mediator.Send(new PublishJobRoleCommand
+            {
+                JobRoleId = id
+            });
+            return PrepareResponse(response);
+        }
+
+        [HttpGet("{id}/pipeline")]
+        public async Task<IActionResult> GetJobPipeline(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+        {
+            var response = await _mediator.Send(new GetJobRolePipelineQuery
+            {
+                JobRoleId= id,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
+            return PrepareResponse(response);
+        }
+        [HttpGet("{id}/applicants")]
+        public async Task<IActionResult> GetJobApplicants(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+        {
+            var response = await _mediator.Send(new GetJobRoleApplicantsQuery
+            {
+                JobRoleId= id,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            });
+            return PrepareResponse(response);
+        }
+
+        [HttpGet("{id}/timeline")]
+        public async Task<IActionResult> GetJobTimeline(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+        {
+            var response = await _mediator.Send(new GetJobRoleTimelineQuery
+            {
+                JobRoleId= id,
+            });
+            return PrepareResponse(response);
+        }
+
         [HttpPut("update/{id}")]
         public async Task<IActionResult> Update(long id, UpdateJobCommand command)
         {
@@ -30,6 +76,17 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
         }
+
+        [HttpDelete("archive/{id}")]
+        public async Task<IActionResult> DeleteJobRole(long id)
+        {
+            var response = await _mediator.Send(new DeleteJobRoleCommand
+            {
+                JobRoleId = id
+            });
+            return PrepareResponse(response);
+        }
+
         [HttpPatch("update-status/{id}")]
         public async Task<IActionResult> UpdateStatus(long id, UpdateJobStatusCommand command)
         {

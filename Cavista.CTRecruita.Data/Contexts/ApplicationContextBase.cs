@@ -18,9 +18,10 @@ namespace Cavista.CTRecruita.Data.Contexts
         public DbSet<FormField> FormFields { get; set; }
         public DbSet<ApplicationAnswer> ApplicationAnswers { get; set; }
         public DbSet<JobRole> JobRoles { get; set; }
-        public DbSet<Department> Departments { get; set; }
+        public DbSet<Department> Departments { get; set; }  
         public DbSet<Interview> Interviews { get; set; }
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<Application> Applications { get; set; }
+        public DbSet<ApplicationStageHistory> ApplicationStageHistories { get; set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Cavista.CTRecruita.Web
@@ -14,7 +15,7 @@ namespace Cavista.CTRecruita.Web
             _mediator = mediator;
         }
 
-        //protected long CurrentUserId => GetCurrentUserId();
+        protected long CurrentUserId => GetCurrentUserId();
         protected string CurrentUserName => GetUserName();
         protected string CurrentUserRole => GetCurrentRole();
         protected List<string> CurrentUserRoles => GetCurrentRoles();
@@ -92,16 +93,16 @@ namespace Cavista.CTRecruita.Web
         }
 
 
-        //private long GetCurrentUserId()
-        //{
-        //    var userId = User?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
-        //    if (string.IsNullOrWhiteSpace(userId))
-        //    {
-        //        throw new UnauthorizedAccessException($"User ID not found");
-        //    }
-        //    if (long.TryParse(userId, out var UserId)) { return UserId; }
-        //    throw new UnauthorizedAccessException("Invalid userid format in token");
-        //}
+        private long GetCurrentUserId()
+        {
+            var userId = User?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                throw new UnauthorizedAccessException($"User ID not found");
+            }
+            if (long.TryParse(userId, out var UserId)) { return UserId; }
+            throw new UnauthorizedAccessException("Invalid userid format in token");
+        }
 
         //private bool HasAdminRole()
         //{
