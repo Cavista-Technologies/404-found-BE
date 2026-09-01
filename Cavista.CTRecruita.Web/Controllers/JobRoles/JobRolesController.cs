@@ -1,8 +1,10 @@
-﻿using Cavista.CTRecruita.Commands.Roles;
+﻿using Cavista.CTRecruita.Commands.Applications;
+using Cavista.CTRecruita.Commands.Roles;
 using Cavista.CTRecruita.Data.Entities.Enums;
 using Cavista.CTRecruita.Queries.Departments;
 using Cavista.CTRecruita.Queries.JobRoles;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
+using Cavista.CTRecruita.Web.RequestModels.ApplicationModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -74,6 +76,19 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
         {
             command.JobRoleId = id;
             var response = await _mediator.Send(command);
+            return PrepareResponse(response);
+        }
+
+        [HttpPut("{id}/update-application-stage")]
+        public async Task<IActionResult> UpdateApplicationStage(long id, UpdateApplicationStage request)
+        {
+            var response = await _mediator.Send(new MoveApplicationStageCommand
+            {
+                ApplicationId = id,
+                CurrentUserId = CurrentUserId,
+                ToStage = request.Stage,
+                Reason = request.Reason,
+            });
             return PrepareResponse(response);
         }
 

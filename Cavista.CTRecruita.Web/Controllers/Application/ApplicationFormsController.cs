@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Commands.Applications;
 using Cavista.CTRecruita.Commands.Applications;
+using Cavista.CTRecruita.Queries.ApplicationQueries;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Cavista.CTRecruita.Web.RequestModels.ApplicationModel;
 using Microsoft.AspNetCore.Authorization;
@@ -24,22 +25,31 @@ namespace Cavista.CTRecruita.Web.Controllers.Application
         }
 
         [HttpPost("submit-application")]
+        [AllowAnonymous]
         public async Task<IActionResult> SubmitApplication(SubmitApplicationCommand command)
         {
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
         }
 
-        [HttpPut("{id}/update-application-stage")]
-        public async Task<IActionResult> UpdateApplicationStage(long id, UpdateApplicationStage request)
+        [HttpGet("open")]
+        public async Task<IActionResult> GetOpenApplications([FromQuery] long? departmentId)
         {
-            var response = await _mediator.Send(new MoveApplicationStageCommand
-            {
-                ApplicationId = id,
-                CurrentUserId = CurrentUserId,
-                ToStage = request.Stage,
-                Reason = request.Reason,
-            });
+            var response = await _mediator.Send(new GetOpenApplicationsQuery { DepartmentId = departmentId });
+            return PrepareResponse(response);
+        }
+        [HttpGet("{slug}")]
+        public async Task<IActionResult> GetBySlug(string slug)
+        {
+            var response = await _mediator.Send(new GetRoleDetailBySlugQuery { Slug = slug });
+            return PrepareResponse(response);
+        }
+
+        [HttpGet("public/{slug}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetPublic(string slug)
+        {
+            var response = await _mediator.Send(new GetRoleApplicationFormQuery { Slug = slug });
             return PrepareResponse(response);
         }
     }
