@@ -23,6 +23,9 @@ namespace Cavista.CTRecruita.Commands.Roles
             var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
             if (job is null)
                 return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Role not found");
+
+            if (job.Status != JobStatus.Open)
+                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Role must be active before it can be published");
             var missing = new List<string>();
 
             if (string.IsNullOrWhiteSpace(job.RecruiterName)) missing.Add("Recruiter");
@@ -31,7 +34,7 @@ namespace Cavista.CTRecruita.Commands.Roles
             if (missing.Count != 0)
                 return new ApiResponse(true, (int)StatusCodes.Status400BadRequest,
                     $"Complete these to publish: {string.Join(", ", missing)}");
-            job.Status = JobStatus.Open;
+           
             job.PublishedAt = DateTime.UtcNow;
             job.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);

@@ -39,6 +39,10 @@ namespace Cavista.CTRecruita.Commands.Applications
             var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
             if (job is null)
                 return new ApiResponse(true, StatusCodes.Status404NotFound, "Job not found");
+
+            if (job.Status != JobStatus.Open)
+                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, "Role must be active before an application form can be created");
+
             var exists = await _context.ApplicationForms.AnyAsync(f => f.JobRoleId == request.JobRoleId, cancellationToken);
             if (exists)
                 return new ApiResponse(true, StatusCodes.Status409Conflict, "This job already has an application form");
