@@ -5,6 +5,7 @@ using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace Cavista.CTRecruita.Queries.JobRoles
 {
@@ -53,8 +54,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 query = query.Where(x => x.Status == request.Status.Value);
             var roles = await query
                 .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new GetOpenRolesModel
-                 {
+                .Select(x => new GetRoleDetailQueryModel
+                {
                     Id = x.Id,
                     Title = x.Title,
                     Department = x.Department.Name,
@@ -66,11 +67,15 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     PriorityStr = x.Priority.GetDescription(),
                     NumberOfOpenings = x.NumberOfOpenings,
                     SlaTargetDays = x.SlaTargetDays,
+                    RecruiterName = x.RecruiterName,
+                    HiringManagerName = x.HiringManagerName,
+                    HiringManagerEmail = x.HiringManagerEmail,
+
                     //SlaPercent = x.SlaTargetDays > 0
                     //    ? Math.Min(100, (int)(EF.Functions.DateDiffDay(x.CreatedAt, DateTime.UtcNow) * 100.0 / x.SlaTargetDays))
                     //    : 0,
                     TargetHireDate = x.TargetHireDate,
-                    PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
+                    //PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
                     ApplicantsCount = x.Applications.Count()
                 })
                 .ToListAsync(cancellationToken);
