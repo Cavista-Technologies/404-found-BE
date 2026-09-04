@@ -2,6 +2,7 @@
 using Cavista.CTRecruita.Data.Entities.Enums;
 using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
+using Cavista.CTRecruita.Utilities.Extension;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -14,8 +15,10 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string Search { get; set; }
         public long? DepartmentId { get; set; }
         public JobStatus? Status { get; set; }
+        public int Page { get; set; } = 1;
+        public int PageLength { get; set; } = 10;
     }
-
+        
     public class GetOpenRolesModel
     {
         public long Id { get; set; }
@@ -70,7 +73,6 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     RecruiterName = x.RecruiterName,
                     HiringManagerName = x.HiringManagerName,
                     HiringManagerEmail = x.HiringManagerEmail,
-
                     //SlaPercent = x.SlaTargetDays > 0
                     //    ? Math.Min(100, (int)(EF.Functions.DateDiffDay(x.CreatedAt, DateTime.UtcNow) * 100.0 / x.SlaTargetDays))
                     //    : 0,
@@ -78,7 +80,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     //PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
                     ApplicantsCount = x.Applications.Count()
                 })
-                .ToListAsync(cancellationToken);
+                .PaginateAsync(request.Page, request.PageLength);
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
         }
     }
