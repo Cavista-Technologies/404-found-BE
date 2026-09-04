@@ -111,13 +111,15 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
         }
 
         [HttpGet("open-roles")]
-        public async Task<IActionResult> GetOpenRoles([FromQuery] JobStatus? jobStatus, [FromQuery] long? departmentId, [FromQuery] string? searchString = null)
+        public async Task<IActionResult> GetOpenRoles([FromQuery] JobStatus? jobStatus, [FromQuery] long? departmentId, int? pageLength, int? page, [FromQuery] string? searchString = null)
         {
             var roles = await _mediator.Send( new  GetOpenRolesQuery 
             {
                 Status = jobStatus,
                 DepartmentId = departmentId,
-                Search = searchString
+                Search = searchString,
+                Page = page ?? 1,
+                PageLength = pageLength ?? 10,
             });
 
             return PrepareResponse(roles);
