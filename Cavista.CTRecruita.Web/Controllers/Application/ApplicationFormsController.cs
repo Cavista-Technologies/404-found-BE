@@ -17,9 +17,17 @@ namespace Cavista.CTRecruita.Web.Controllers.Application
         public ApplicationFormsController(IMediator mediator) : base(mediator)
         {
         }
-        [HttpPost("create")]
-        public async Task<IActionResult> Create(CreateApplicationFormCommand command)
+        [HttpPost("{jobRoleId}/save-application-form")]
+        public async Task<IActionResult> SaveApplicationForm(long jobRoleId, CreateApplicationFormCommand command)
         {
+            command.JobRoleId = jobRoleId;
+            var response = await _mediator.Send(command);
+            return PrepareResponse(response);
+        }
+        [HttpPost("{jobRoleId}/publish-application-form")]
+        public async Task<IActionResult> PublishApplicationForm(long jobRoleId, PublishApplicationFormCommand command)
+        {
+            command.JobRoleId = jobRoleId;
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
         }
@@ -51,6 +59,14 @@ namespace Cavista.CTRecruita.Web.Controllers.Application
         {
             var response = await _mediator.Send(new GetRoleApplicationFormQuery { Slug = slug });
             return PrepareResponse(response);
+        }
+
+        [HttpGet("{jobRoleId}/application-form")]
+        public async Task<IActionResult> GetApplicationFormByJobRole(long jobRoleId)
+        {
+            var response = await _mediator.Send(new GetApplicationFormByJobRoleQuery { JobRoleId = jobRoleId });
+            return PrepareResponse(response);
+
         }
     }
 }

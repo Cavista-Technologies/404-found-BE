@@ -28,16 +28,6 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
            
         }
 
-        [HttpPost("publish/{id}")]
-        public async Task<IActionResult> PublishJobRole(long id)
-        {
-            var response = await _mediator.Send(new PublishJobRoleCommand
-            {
-                JobRoleId = id
-            });
-            return PrepareResponse(response);
-        }
-
         [HttpGet("{id}/pipeline")]
         public async Task<IActionResult> GetJobPipeline(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {

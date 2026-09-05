@@ -36,6 +36,11 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string Location { get; set; }
         public int ApplicantsCount { get; set; }
         public Dictionary<string, List<object>> Pipeline { get; set; } = new();
+        public bool HasApplicationForm { get; set; }
+        public long? ApplicationFormId { get; set; }
+        public string? ApplicationFormSlug { get; set; }
+        public FormStatus? ApplicationFormStatus { get; set; }
+        public string? ApplicationFormStatusStr { get; set; }
     }
     public class GetRoleDetailHandler : IRequestHandler<GetRoleDetailQuery, ApiResponse>
     {
@@ -69,6 +74,11 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                         a.Source
                     }).ToList<object>()
                 );
+            var form = await _context.ApplicationForms
+                .Where(f => f.JobRoleId == role.Id)
+                .Select(f => new { f.Id, f.Status, f.Slug })
+                .FirstOrDefaultAsync(cancellationToken);
+
 
             var result = new GetRoleDetailQueryModel
             {
@@ -92,7 +102,12 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 SalaryRange = role.SalaryRange,
                 Location = role.Location,
                 ApplicantsCount = role.Applications.Count,
-                Pipeline = pipeline
+                Pipeline = pipeline,
+                HasApplicationForm = form != null,
+                ApplicationFormId = form?.Id,
+                ApplicationFormSlug = form?.Slug,
+                ApplicationFormStatus = form?.Status,
+                ApplicationFormStatusStr = form?.Status.GetDescription()
             };
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Role retrieved", result);
         }
