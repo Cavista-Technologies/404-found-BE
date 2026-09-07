@@ -1,10 +1,7 @@
 ﻿using Cavista.CTRecruita.Commands.Applications;
-using Cavista.CTRecruita.Commands.Applications;
 using Cavista.CTRecruita.Queries.ApplicationQueries;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
-using Cavista.CTRecruita.Web.RequestModels.ApplicationModel;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cavista.CTRecruita.Web.Controllers.Application
@@ -34,7 +31,7 @@ namespace Cavista.CTRecruita.Web.Controllers.Application
 
         [HttpPost("submit-application")]
         [AllowAnonymous]
-        public async Task<IActionResult> SubmitApplication(SubmitApplicationCommand command)
+        public async Task<IActionResult> SubmitApplication([FromForm] SubmitApplicationCommand command)
         {
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
