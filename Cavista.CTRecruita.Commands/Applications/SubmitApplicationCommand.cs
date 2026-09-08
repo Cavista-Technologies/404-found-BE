@@ -55,7 +55,7 @@ namespace Cavista.CTRecruita.Commands.Applications
             var fileError = ValidateFiles(request, fieldsById);
             if (fileError != null)
                 return new ApiResponse(true, StatusCodes.Status400BadRequest, fileError);
-            var missing = GetMissingRequiredFields(form.Fields, answers, request.FileFieldIds);
+            var missing = GetMissingRequiredFields(form.Fields, request, answers);
             if (missing.Count != 0)
                 return new ApiResponse(true, StatusCodes.Status400BadRequest, $"Missing required: {string.Join(", ", missing)}");
             var savedFiles = await SaveFilesAsync(request, cancellationToken);
@@ -116,21 +116,29 @@ namespace Cavista.CTRecruita.Commands.Applications
             }
             return null;
         }
-        private static List<string> GetMissingRequiredFields(
-            ICollection<FormField> fields,
-            List<AnswerDto> answers,
-            List<long> fileFieldIds)
+        private static List<string> GetMissingRequiredFields( ICollection<FormField> fields, SubmitApplicationCommand request, List<AnswerDto> answers)
         {
             var answered = answers
                 .Where(a => !string.IsNullOrWhiteSpace(a.Value))
                 .Select(a => a.FormFieldId)
-                .Concat(fileFieldIds)
+                .Concat(request.FileFieldIds)
                 .ToHashSet();
-            return fields
-                .Where(f => f.IsRequired && !answered.Contains(f.Id))
-                .OrderBy(f => f.SortOrder)
-                .Select(f => f.Label)
-                .ToList();
+            var missing = new List<string>();
+            foreach (var f in fields.Where(f => f.IsRequired).OrderBy(f => f.SortOrder))
+            {
+                bool satisfied = f.IsStandard
+                    ? f.FieldType switch
+                    {
+                        FormFieldType.Email => !string.IsNullOrWhiteSpace(request.Email),
+                        FormFieldType.Phone => !string.IsNullOrWhiteSpace(request.Phone),
+                        FormFieldType.FileUpload => answered.Contains(f.Id),
+                        _ => !string.IsNullOrWhiteSpace(request.FullName)
+                    }
+                    : answered.Contains(f.Id);
+                if (!satisfied)
+                    missing.Add(f.Label);
+            }
+            return missing;
         }
         private async Task<List<ApplicationAnswer>> SaveFilesAsync(SubmitApplicationCommand request, CancellationToken cancellationToken)
         {
