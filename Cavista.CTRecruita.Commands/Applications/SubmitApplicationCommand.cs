@@ -18,7 +18,7 @@ namespace Cavista.CTRecruita.Commands.Applications
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public string AnswersJson { get; set; }
+        public string AnswersJson { get; set; } = "[]";
         public List<IFormFile> Files { get; set; } = new();
         public List<long> FileFieldIds { get; set; } = new();
     }
@@ -46,18 +46,18 @@ namespace Cavista.CTRecruita.Commands.Applications
                 .AsNoTracking()
                 .FirstOrDefaultAsync(f => f.Slug == request.Slug && f.Status == FormStatus.Published, cancellationToken);
             if (form is null)
-                return new ApiResponse(true, StatusCodes.Status404NotFound, "Application form not found");
+                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Application form not found");
             if (request.Files.Count != request.FileFieldIds.Count)
-                return new ApiResponse(true, StatusCodes.Status400BadRequest, "Each uploaded file must have a matching field id");
+                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, "Each uploaded file must have a matching field id");
             if (!TryParseAnswers(request.AnswersJson, out var answers))
-                return new ApiResponse(true, StatusCodes.Status400BadRequest, "Answers payload is not valid JSON");
+                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, "Answers payload is not valid JSON");
             var fieldsById = form.Fields.ToDictionary(f => f.Id);
             var fileError = ValidateFiles(request, fieldsById);
             if (fileError != null)
-                return new ApiResponse(true, StatusCodes.Status400BadRequest, fileError);
+                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, fileError);
             var missing = GetMissingRequiredFields(form.Fields, request, answers);
             if (missing.Count != 0)
-                return new ApiResponse(true, StatusCodes.Status400BadRequest, $"Missing required: {string.Join(", ", missing)}");
+                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, $"Missing required: {string.Join(", ", missing)}");
             var savedFiles = await SaveFilesAsync(request, cancellationToken);
             var (firstName, lastName) = SplitFullName(request.FullName);
             var application = new Application
@@ -69,7 +69,8 @@ namespace Cavista.CTRecruita.Commands.Applications
                 AppliedOn = DateTime.UtcNow,
                 Candidate = new Candidate
                 {
-                    FirstName = request.FullName,
+                    FirstName = firstName,
+                    LastName = lastName,
                     Email = request.Email,
                     PhoneNumber = request.Phone
                 },
@@ -81,7 +82,7 @@ namespace Cavista.CTRecruita.Commands.Applications
             };
             _context.Applications.Add(application);
             await _context.SaveChangesAsync(cancellationToken);
-            return new ApiResponse(false, StatusCodes.Status201Created, "Application submitted");
+            return new ApiResponse(false, (int)StatusCodes.Status201Created, "Application submitted");
         }
         private static bool TryParseAnswers(string json, out List<AnswerDto> answers)
         {
@@ -117,39 +118,39 @@ namespace Cavista.CTRecruita.Commands.Applications
             }
             return null;
         }
-        private static List<string> GetMissingRequiredFields( ICollection<FormField> fields, SubmitApplicationCommand request, List<AnswerDto> answers)
+        private static List<string> GetMissingRequiredFields(
+            ICollection<FormField> fields,
+            SubmitApplicationCommand request,
+            List<AnswerDto> answers)
         {
             var answered = answers
                 .Where(a => !string.IsNullOrWhiteSpace(a.Value))
                 .Select(a => a.FormFieldId)
                 .Concat(request.FileFieldIds)
                 .ToHashSet();
-            var missing = new List<string>();
-            foreach (var f in fields.Where(f => f.IsRequired).OrderBy(f => f.SortOrder))
+            bool StandardSatisfied(FormField f) => f.FieldType switch
             {
-                bool satisfied = f.IsStandard
-                    ? f.FieldType switch
-                    {
-                        FormFieldType.Email => !string.IsNullOrWhiteSpace(request.Email),
-                        FormFieldType.Phone => !string.IsNullOrWhiteSpace(request.Phone),
-                        FormFieldType.FileUpload => answered.Contains(f.Id),
-                        _ => !string.IsNullOrWhiteSpace(request.FullName)
-                    }
-                    : answered.Contains(f.Id);
-                if (!satisfied)
-                    missing.Add(f.Label);
-            }
-            return missing;
+                FormFieldType.Email => !string.IsNullOrWhiteSpace(request.Email),
+                FormFieldType.Phone => !string.IsNullOrWhiteSpace(request.Phone),
+                FormFieldType.FileUpload => answered.Contains(f.Id),
+                _ => !string.IsNullOrWhiteSpace(request.FullName)
+            };
+            return fields
+                .Where(f => f.IsRequired)
+                .OrderBy(f => f.SortOrder)
+                .Where(f => !(f.IsStandard ? StandardSatisfied(f) : answered.Contains(f.Id)))
+                .Select(f => f.Label)
+                .ToList();
         }
-        private static (string FirstName, string LastName) SplitFullName(string fullName)
+        private static (string? FirstName, string? LastName) SplitFullName(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
-                return (string.Empty, string.Empty);
+                return (null, null);
             var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
             return parts.Length switch
             {
-                0 => (string.Empty, string.Empty),
-                1 => (parts[0], string.Empty),
+                0 => (null, null),
+                1 => (parts[0], null),
                 _ => (parts[0], parts[1])
             };
         }
@@ -157,7 +158,8 @@ namespace Cavista.CTRecruita.Commands.Applications
         {
             if (request.Files.Count == 0)
                 return new List<ApplicationAnswer>();
-            var uploadRoot = _configuration["FileStorage:UploadPath"] ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "applications");
+            var uploadRoot = _configuration["FileStorage:UploadPath"]
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", UploadFolder);
             Directory.CreateDirectory(uploadRoot);
             var saved = new List<ApplicationAnswer>(request.Files.Count);
             for (int i = 0; i < request.Files.Count; i++)
