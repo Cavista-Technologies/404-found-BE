@@ -28,6 +28,6 @@ namespace Cavista.CTRecruita.Data.Entities.Roles
 
         public AppUser ChangedBy { get; set; }
 
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 }

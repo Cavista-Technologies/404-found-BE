@@ -6,6 +6,6 @@ namespace Cavista.CTRecruita.Web.RequestModels.ApplicationModel
     public class UpdateApplicationStage
     {
         public ApplicationStage Stage { get; set; }
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 }

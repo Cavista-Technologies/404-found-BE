@@ -16,6 +16,6 @@ namespace Cavista.CTRecruita.Data.Entities.Roles
         [ForeignKey(nameof(ChangedBy))]
         public long? ChangedById { get; set; }
         public AppUser ChangedBy { get; set; }
-        public string Reason { get; set; }
+        public string? Reason { get; set; }
     }
 }

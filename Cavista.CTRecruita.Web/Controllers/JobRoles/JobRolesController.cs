@@ -121,7 +121,7 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
         public async Task<IActionResult> GetAnOpenRoles(long id)
         {
             var departments = await _mediator.Send(new GetRoleDetailQuery
-            {
+            {   
                 Id = id
             });
 
