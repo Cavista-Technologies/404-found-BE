@@ -45,40 +45,67 @@ namespace Cavista.CTRecruita.Queries.JobRoles
     public class GetRoleDetailHandler : IRequestHandler<GetRoleDetailQuery, ApiResponse>
     {
         private readonly ApplicationReadOnlyContext _context;
+
         public GetRoleDetailHandler(ApplicationReadOnlyContext context)
         {
             _context = context;
         }
-        public async Task<ApiResponse> Handle(GetRoleDetailQuery request, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse> Handle(
+            GetRoleDetailQuery request,
+            CancellationToken cancellationToken)
         {
             var role = await _context.JobRoles
                 .Include(x => x.Department)
                 .Include(x => x.Applications)
-                    .ThenInclude(a => a.Candidate)
-                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+                    .ThenInclude(a => a.Candidates)
+                        .ThenInclude(ac => ac.Candidate)
+                .FirstOrDefaultAsync(
+                    x => x.Id == request.Id,
+                    cancellationToken);
+
             if (role is null)
-                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Role not found");
+            {
+                return new ApiResponse(
+                    true,
+                    StatusCodes.Status404NotFound,
+                    "Role not found");
+            }
+
             var slaPercent = role.SlaTargetDays > 0
-                ? Math.Min(100, (int)((DateTime.UtcNow - role.CreatedAt).TotalDays * 100.0 / role.SlaTargetDays))
+                ? Math.Min(
+                    100,
+                    (int)((DateTime.UtcNow - role.CreatedAt).TotalDays * 100.0 / role.SlaTargetDays))
                 : 0;
-            var pipeline = role.Applications
-                .Where(a => a.Status == ApplicationStatus.Active)
-                .GroupBy(a => a.Stage)
+
+            var applicants = role.Applications
+                .SelectMany(a => a.Candidates)
+                .ToList();
+
+            var pipeline = applicants
+                .Where(x => x.Status == ApplicationStatus.Active)
+                .GroupBy(x => x.Stage)
                 .ToDictionary(
                     g => g.Key.ToString(),
-                    g => g.Select(a => new
+                    g => g.Select(x => new
                     {
-                        a.Id,
-                        CandidateName = $"{a.Candidate.FirstName} {a.Candidate.LastName}",
-                        a.Candidate.Email,
-                        a.Source
-                    }).ToList<object>()
+                        x.Id,
+                        CandidateName =
+                            $"{x.Candidate.FirstName} {x.Candidate.LastName}",
+                        x.Candidate.Email,
+                        x.Source
+                    }).Cast<object>().ToList()
                 );
+
             var form = await _context.ApplicationForms
                 .Where(f => f.JobRoleId == role.Id)
-                .Select(f => new { f.Id, f.Status, f.Slug })
+                .Select(f => new
+                {
+                    f.Id,
+                    f.Status,
+                    f.Slug
+                })
                 .FirstOrDefaultAsync(cancellationToken);
-
 
             var result = new GetRoleDetailQueryModel
             {
@@ -101,7 +128,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 HiringManagerEmail = role.HiringManagerEmail,
                 SalaryRange = role.SalaryRange,
                 Location = role.Location,
-                ApplicantsCount = role.Applications.Count,
+                ApplicantsCount = applicants.Count,
                 Pipeline = pipeline,
                 HasApplicationForm = form != null,
                 ApplicationFormId = form?.Id,
@@ -109,7 +136,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 ApplicationFormStatus = form?.Status,
                 ApplicationFormStatusStr = form?.Status.GetDescription()
             };
-            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Role retrieved", result);
+
+            return new ApiResponse( false, StatusCodes.Status200OK, "Role retrieved", result);
         }
     }
 }

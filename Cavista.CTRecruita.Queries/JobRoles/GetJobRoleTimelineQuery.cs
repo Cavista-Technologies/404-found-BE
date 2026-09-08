@@ -21,15 +21,29 @@ namespace Cavista.CTRecruita.Queries.JobRoles
     public class GetJobRoleTimelineHandler : IRequestHandler<GetJobRoleTimelineQuery, ApiResponse>
     {
         private readonly ApplicationReadOnlyContext _context;
+
         public GetJobRoleTimelineHandler(ApplicationReadOnlyContext context)
         {
             _context = context;
         }
-        public async Task<ApiResponse> Handle(GetJobRoleTimelineQuery request, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse> Handle(
+            GetJobRoleTimelineQuery request,
+            CancellationToken cancellationToken)
         {
-            var job = await _context.JobRoles.FirstOrDefaultAsync(x => x.Id == request.JobRoleId, cancellationToken);
+            var job = await _context.JobRoles
+                .FirstOrDefaultAsync(
+                    x => x.Id == request.JobRoleId,
+                    cancellationToken);
+
             if (job == null)
-                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Role not found");
+            {
+                return new ApiResponse(
+                    true,
+                    StatusCodes.Status404NotFound,
+                    "Role not found");
+            }
+
             var events = new List<TimelineEventModel>();
 
             if (job.PublishedAt.HasValue)
@@ -43,23 +57,43 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     Date = job.PublishedAt.Value
                 });
             }
-            var stageChanges = await _context.ApplicationStageHistories
-                .Include(h => h.Application).ThenInclude(a => a.Candidate)
+
+            var stageChanges = await _context.ApplicationCandidateStageHistories
+                .Include(h => h.ApplicationCandidate)
+                    .ThenInclude(ac => ac.Application)
+                .Include(h => h.ApplicationCandidate)
+                    .ThenInclude(ac => ac.Candidate)
                 .Include(h => h.ChangedBy)
-                .Where(h => h.Application.JobRoleId == request.JobRoleId)
+                .Where(h =>
+                    h.ApplicationCandidate.Application.JobRoleId ==
+                    request.JobRoleId)
                 .OrderBy(h => h.ChangedOn)
                 .Select(h => new TimelineEventModel
                 {
                     Type = "StageChange",
-                    Description = $"Candidate moved {h.FromStage} to {h.ToStage}",
-                    CandidateName = h.Application.Candidate.FirstName + " " + h.Application.Candidate.LastName,
-                    Actor = h.ChangedBy != null ? h.ChangedBy.FirstName + " " + h.ChangedBy.LastName : "System",
+                    Description =
+                        $"Candidate moved {h.FromStage} to {h.ToStage}",
+                    CandidateName =
+                        ((h.ApplicationCandidate.Candidate.FirstName ?? "") +
+                        " " +
+                        (h.ApplicationCandidate.Candidate.LastName ?? ""))
+                        .Trim(),
+                    Actor = h.ChangedBy != null
+                        ? ((h.ChangedBy.FirstName ?? "") +
+                           " " +
+                           (h.ChangedBy.LastName ?? "")).Trim()
+                        : "System",
                     Date = h.ChangedOn
                 })
                 .ToListAsync(cancellationToken);
+
             events.AddRange(stageChanges);
-            var ordered = events.OrderBy(e => e.Date).ToList();
-            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Timeline retrieved", ordered);
+
+            var ordered = events
+                .OrderBy(e => e.Date)
+                .ToList();
+
+            return new ApiResponse( false, StatusCodes.Status200OK, "Timeline retrieved", ordered);
         }
     }
 }

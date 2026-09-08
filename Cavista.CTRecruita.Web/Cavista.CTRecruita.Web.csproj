@@ -31,4 +31,8 @@
     <ProjectReference Include="..\Cavista.CTRecruita.Utilities\Cavista.CTRecruita.Utilities.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

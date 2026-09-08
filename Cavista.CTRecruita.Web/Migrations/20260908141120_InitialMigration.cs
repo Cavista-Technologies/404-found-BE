@@ -85,17 +85,17 @@ namespace Cavista.CTRecruita.Web.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    FirstName = table.Column<string>(type: "longtext", nullable: false)
+                    FirstName = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    LastName = table.Column<string>(type: "longtext", nullable: false)
+                    LastName = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Email = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PhoneNumber = table.Column<string>(type: "longtext", nullable: false)
+                    PhoneNumber = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Source = table.Column<string>(type: "longtext", nullable: false)
+                    Source = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    LinkedInUrl = table.Column<string>(type: "longtext", nullable: false)
+                    LinkedInUrl = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -275,6 +275,8 @@ namespace Cavista.CTRecruita.Web.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Priority = table.Column<int>(type: "int", nullable: false),
                     TargetHireDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    FilledAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    PublishedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     SlaTargetDays = table.Column<int>(type: "int", nullable: false),
                     SalaryRange = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -335,13 +337,9 @@ namespace Cavista.CTRecruita.Web.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    CandidateId = table.Column<long>(type: "bigint", nullable: false),
                     JobRoleId = table.Column<long>(type: "bigint", nullable: false),
-                    Stage = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    Source = table.Column<int>(type: "int", nullable: false),
-                    AppliedOn = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    AssignedRecruiterId = table.Column<long>(type: "bigint", nullable: true),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
@@ -350,17 +348,6 @@ namespace Cavista.CTRecruita.Web.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Applications", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Applications_AspNetUsers_AssignedRecruiterId",
-                        column: x => x.AssignedRecruiterId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Applications_Candidates_CandidateId",
-                        column: x => x.CandidateId,
-                        principalTable: "Candidates",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Applications_JobRoles_JobRoleId",
                         column: x => x.JobRoleId,
@@ -405,7 +392,48 @@ namespace Cavista.CTRecruita.Web.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "ApplicationStageHistory",
+                name: "ApplicationCandidates",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    ApplicationId = table.Column<long>(type: "bigint", nullable: false),
+                    CandidateId = table.Column<long>(type: "bigint", nullable: false),
+                    Stage = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Source = table.Column<int>(type: "int", nullable: false),
+                    AppliedOn = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    AssignedRecruiterId = table.Column<long>(type: "bigint", nullable: true),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationCandidates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApplicationCandidates_Applications_ApplicationId",
+                        column: x => x.ApplicationId,
+                        principalTable: "Applications",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ApplicationCandidates_AspNetUsers_AssignedRecruiterId",
+                        column: x => x.AssignedRecruiterId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ApplicationCandidates_Candidates_CandidateId",
+                        column: x => x.CandidateId,
+                        principalTable: "Candidates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ApplicationStageHistories",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -424,15 +452,83 @@ namespace Cavista.CTRecruita.Web.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ApplicationStageHistory", x => x.Id);
+                    table.PrimaryKey("PK_ApplicationStageHistories", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ApplicationStageHistory_Applications_ApplicationId",
+                        name: "FK_ApplicationStageHistories_Applications_ApplicationId",
                         column: x => x.ApplicationId,
                         principalTable: "Applications",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ApplicationStageHistory_AspNetUsers_ChangedById",
+                        name: "FK_ApplicationStageHistories_AspNetUsers_ChangedById",
+                        column: x => x.ChangedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ApplicationAnswers",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    ApplicationCandidateId = table.Column<long>(type: "bigint", nullable: false),
+                    FormFieldId = table.Column<long>(type: "bigint", nullable: false),
+                    Value = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationAnswers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApplicationAnswers_ApplicationCandidates_ApplicationCandidat~",
+                        column: x => x.ApplicationCandidateId,
+                        principalTable: "ApplicationCandidates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ApplicationAnswers_FormFields_FormFieldId",
+                        column: x => x.FormFieldId,
+                        principalTable: "FormFields",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ApplicationCandidateStageHistories",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    ApplicationCandidateId = table.Column<long>(type: "bigint", nullable: false),
+                    FromStage = table.Column<int>(type: "int", nullable: false),
+                    ToStage = table.Column<int>(type: "int", nullable: false),
+                    ChangedOn = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ChangedById = table.Column<long>(type: "bigint", nullable: true),
+                    Reason = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApplicationCandidateStageHistories", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApplicationCandidateStageHistories_ApplicationCandidates_App~",
+                        column: x => x.ApplicationCandidateId,
+                        principalTable: "ApplicationCandidates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ApplicationCandidateStageHistories_AspNetUsers_ChangedById",
                         column: x => x.ChangedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
@@ -445,7 +541,7 @@ namespace Cavista.CTRecruita.Web.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ApplicationId = table.Column<long>(type: "bigint", nullable: false),
+                    ApplicationCandidateId = table.Column<long>(type: "bigint", nullable: false),
                     ScheduledAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     DurationMinutes = table.Column<int>(type: "int", nullable: false),
                     Mode = table.Column<int>(type: "int", nullable: false),
@@ -465,9 +561,9 @@ namespace Cavista.CTRecruita.Web.Migrations
                 {
                     table.PrimaryKey("PK_Interviews", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Interviews_Applications_ApplicationId",
-                        column: x => x.ApplicationId,
-                        principalTable: "Applications",
+                        name: "FK_Interviews_ApplicationCandidates_ApplicationCandidateId",
+                        column: x => x.ApplicationCandidateId,
+                        principalTable: "ApplicationCandidates",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -479,43 +575,10 @@ namespace Cavista.CTRecruita.Web.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
-            migrationBuilder.CreateTable(
-                name: "ApplicationAnswers",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    ApplicationId = table.Column<long>(type: "bigint", nullable: false),
-                    FormFieldId = table.Column<long>(type: "bigint", nullable: false),
-                    Value = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationAnswers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ApplicationAnswers_Applications_ApplicationId",
-                        column: x => x.ApplicationId,
-                        principalTable: "Applications",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ApplicationAnswers_FormFields_FormFieldId",
-                        column: x => x.FormFieldId,
-                        principalTable: "FormFields",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
             migrationBuilder.CreateIndex(
-                name: "IX_ApplicationAnswers_ApplicationId",
+                name: "IX_ApplicationAnswers_ApplicationCandidateId",
                 table: "ApplicationAnswers",
-                column: "ApplicationId");
+                column: "ApplicationCandidateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ApplicationAnswers_FormFieldId",
@@ -523,19 +586,34 @@ namespace Cavista.CTRecruita.Web.Migrations
                 column: "FormFieldId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ApplicationForms_JobRoleId",
-                table: "ApplicationForms",
-                column: "JobRoleId");
+                name: "IX_ApplicationCandidates_ApplicationId",
+                table: "ApplicationCandidates",
+                column: "ApplicationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Applications_AssignedRecruiterId",
-                table: "Applications",
+                name: "IX_ApplicationCandidates_AssignedRecruiterId",
+                table: "ApplicationCandidates",
                 column: "AssignedRecruiterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Applications_CandidateId",
-                table: "Applications",
+                name: "IX_ApplicationCandidates_CandidateId",
+                table: "ApplicationCandidates",
                 column: "CandidateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApplicationCandidateStageHistories_ApplicationCandidateId",
+                table: "ApplicationCandidateStageHistories",
+                column: "ApplicationCandidateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApplicationCandidateStageHistories_ChangedById",
+                table: "ApplicationCandidateStageHistories",
+                column: "ChangedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApplicationForms_JobRoleId",
+                table: "ApplicationForms",
+                column: "JobRoleId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Applications_JobRoleId",
@@ -543,13 +621,13 @@ namespace Cavista.CTRecruita.Web.Migrations
                 column: "JobRoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ApplicationStageHistory_ApplicationId",
-                table: "ApplicationStageHistory",
+                name: "IX_ApplicationStageHistories_ApplicationId",
+                table: "ApplicationStageHistories",
                 column: "ApplicationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ApplicationStageHistory_ChangedById",
-                table: "ApplicationStageHistory",
+                name: "IX_ApplicationStageHistories_ChangedById",
+                table: "ApplicationStageHistories",
                 column: "ChangedById");
 
             migrationBuilder.CreateIndex(
@@ -595,9 +673,9 @@ namespace Cavista.CTRecruita.Web.Migrations
                 column: "ApplicationFormId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Interviews_ApplicationId",
+                name: "IX_Interviews_ApplicationCandidateId",
                 table: "Interviews",
-                column: "ApplicationId");
+                column: "ApplicationCandidateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Interviews_InterviewerId",
@@ -617,7 +695,10 @@ namespace Cavista.CTRecruita.Web.Migrations
                 name: "ApplicationAnswers");
 
             migrationBuilder.DropTable(
-                name: "ApplicationStageHistory");
+                name: "ApplicationCandidateStageHistories");
+
+            migrationBuilder.DropTable(
+                name: "ApplicationStageHistories");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
@@ -644,10 +725,13 @@ namespace Cavista.CTRecruita.Web.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Applications");
+                name: "ApplicationCandidates");
 
             migrationBuilder.DropTable(
                 name: "ApplicationForms");
+
+            migrationBuilder.DropTable(
+                name: "Applications");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

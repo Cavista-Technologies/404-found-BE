@@ -22,6 +22,8 @@ namespace Cavista.CTRecruita.Data.Contexts
         public DbSet<Interview> Interviews { get; set; }
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<Application> Applications { get; set; }
+        public DbSet<ApplicationCandidate> ApplicationCandidates { get; set; }
+        public DbSet<ApplicationCandidateStageHistory> ApplicationCandidateStageHistories { get; set; }
         public DbSet<ApplicationStageHistory> ApplicationStageHistories { get; set; }
     }
 }

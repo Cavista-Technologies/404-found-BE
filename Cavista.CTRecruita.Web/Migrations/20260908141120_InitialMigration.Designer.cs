@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cavista.CTRecruita.Web.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20260908104441_MakeCandidatesFullNameAndLastNameNullable")]
-    partial class MakeCandidatesFullNameAndLastNameNullable
+    [Migration("20260908141120_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -200,7 +200,7 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("ApplicationId")
+                    b.Property<long>("ApplicationCandidateId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
@@ -224,7 +224,7 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationId");
+                    b.HasIndex("ApplicationCandidateId");
 
                     b.HasIndex("FormFieldId");
 
@@ -293,6 +293,43 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<long>("JobRoleId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobRoleId");
+
+                    b.ToTable("Applications");
+                });
+
+            modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ApplicationId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("AppliedOn")
                         .HasColumnType("datetime(6)");
 
@@ -311,9 +348,6 @@ namespace Cavista.CTRecruita.Web.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<long>("JobRoleId")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("Source")
                         .HasColumnType("int");
 
@@ -328,13 +362,61 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ApplicationId");
+
                     b.HasIndex("AssignedRecruiterId");
 
                     b.HasIndex("CandidateId");
 
-                    b.HasIndex("JobRoleId");
+                    b.ToTable("ApplicationCandidates");
+                });
 
-                    b.ToTable("Applications");
+            modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidateStageHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ApplicationCandidateId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ChangedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("ChangedOn")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("FromStage")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("ToStage")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationCandidateId");
+
+                    b.HasIndex("ChangedById");
+
+                    b.ToTable("ApplicationCandidateStageHistories");
                 });
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationStageHistory", b =>
@@ -413,15 +495,12 @@ namespace Cavista.CTRecruita.Web.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("LinkedInUrl")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Source")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -473,7 +552,7 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("ApplicationId")
+                    b.Property<long>("ApplicationCandidateId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreatedAt")
@@ -516,7 +595,7 @@ namespace Cavista.CTRecruita.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationId");
+                    b.HasIndex("ApplicationCandidateId");
 
                     b.HasIndex("InterviewerId");
 
@@ -728,9 +807,9 @@ namespace Cavista.CTRecruita.Web.Migrations
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Forms.ApplicationAnswer", b =>
                 {
-                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.Application", "Application")
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", "ApplicationCandidate")
                         .WithMany("Answers")
-                        .HasForeignKey("ApplicationId")
+                        .HasForeignKey("ApplicationCandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -740,7 +819,7 @@ namespace Cavista.CTRecruita.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Application");
+                    b.Navigation("ApplicationCandidate");
 
                     b.Navigation("FormField");
                 });
@@ -758,6 +837,23 @@ namespace Cavista.CTRecruita.Web.Migrations
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.Application", b =>
                 {
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.JobRole", "JobRole")
+                        .WithMany("Applications")
+                        .HasForeignKey("JobRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("JobRole");
+                });
+
+            modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", b =>
+                {
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.Application", "Application")
+                        .WithMany("Candidates")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Cavista.CTRecruita.Data.Entities.Auth.AppUser", "AssignedRecruiter")
                         .WithMany()
                         .HasForeignKey("AssignedRecruiterId");
@@ -768,23 +864,34 @@ namespace Cavista.CTRecruita.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.JobRole", "JobRole")
-                        .WithMany("Applications")
-                        .HasForeignKey("JobRoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Application");
 
                     b.Navigation("AssignedRecruiter");
 
                     b.Navigation("Candidate");
+                });
 
-                    b.Navigation("JobRole");
+            modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidateStageHistory", b =>
+                {
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", "ApplicationCandidate")
+                        .WithMany("StageHistory")
+                        .HasForeignKey("ApplicationCandidateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Auth.AppUser", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById");
+
+                    b.Navigation("ApplicationCandidate");
+
+                    b.Navigation("ChangedBy");
                 });
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationStageHistory", b =>
                 {
                     b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.Application", "Application")
-                        .WithMany("StageHistory")
+                        .WithMany()
                         .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -800,9 +907,9 @@ namespace Cavista.CTRecruita.Web.Migrations
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.Interview", b =>
                 {
-                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.Application", "Application")
+                    b.HasOne("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", "ApplicationCandidate")
                         .WithMany("Interviews")
-                        .HasForeignKey("ApplicationId")
+                        .HasForeignKey("ApplicationCandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -812,7 +919,7 @@ namespace Cavista.CTRecruita.Web.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Application");
+                    b.Navigation("ApplicationCandidate");
 
                     b.Navigation("Interviewer");
                 });
@@ -885,6 +992,11 @@ namespace Cavista.CTRecruita.Web.Migrations
                 });
 
             modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.Application", b =>
+                {
+                    b.Navigation("Candidates");
+                });
+
+            modelBuilder.Entity("Cavista.CTRecruita.Data.Entities.Roles.ApplicationCandidate", b =>
                 {
                     b.Navigation("Answers");
 

@@ -19,6 +19,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 20;
     }
+
     public class PipelineItemModel
     {
         public long Id { get; set; }
@@ -30,41 +31,57 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string SourceStr { get; set; }
         public int DaysInStage { get; set; }
     }
+
     public class PipelineResultModel
     {
         public int TotalCount { get; set; }
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
-        public List<PipelineItemModel> Items { get; set; }
+        public List<PipelineItemModel> Items { get; set; } = new();
     }
+
     public class GetJobRolePipelineHandler : IRequestHandler<GetJobRolePipelineQuery, ApiResponse>
     {
         private readonly ApplicationReadOnlyContext _context;
+
         public GetJobRolePipelineHandler(ApplicationReadOnlyContext context)
         {
             _context = context;
         }
-        public async Task<ApiResponse> Handle(GetJobRolePipelineQuery request, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse> Handle(
+            GetJobRolePipelineQuery request,
+            CancellationToken cancellationToken)
         {
-            var baseQuery = _context.Applications
-                .Include(a => a.Candidate)
-                .Include(a => a.StageHistory)
-                .Where(a => a.JobRoleId == request.JobRoleId && a.Status != ApplicationStatus.Rejected && a.Status != ApplicationStatus.Withdrawn);
+            var baseQuery = _context.ApplicationCandidates
+                .AsNoTracking()
+                .Include(x => x.Candidate)
+                .Include(x => x.StageHistory)
+                .Include(x => x.Application)
+                .Where(x =>
+                    x.Application.JobRoleId == request.JobRoleId &&
+                    x.Status != ApplicationStatus.Rejected &&
+                    x.Status != ApplicationStatus.Withdrawn);
+
             var total = await baseQuery.CountAsync(cancellationToken);
+
             var raw = await baseQuery
-                .OrderByDescending(a => a.AppliedOn)
+                .OrderByDescending(x => x.AppliedOn)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(a => new
+                .Select(x => new
                 {
-                    a.Id,
-                    CandidateName = a.Candidate.FirstName + " " + a.Candidate.LastName,
-                    a.Candidate.Email,
-                    a.Stage,
-                    a.Source,
-                    LastMovedOn = a.StageHistory.OrderByDescending(h => h.ChangedOn).Select(h => h.ChangedOn).FirstOrDefault()
+                    x.Id,
+                    CandidateName =
+                        ((x.Candidate.FirstName ?? string.Empty) + " " +
+                         (x.Candidate.LastName ?? string.Empty)).Trim(),
+                    x.Candidate.Email,
+                    x.Stage,
+                    x.Source,
+                    LastMovedOn = x.StageHistory .OrderByDescending(h => h.ChangedOn) .Select(h => h.ChangedOn) .FirstOrDefault()
                 })
                 .ToListAsync(cancellationToken);
+
             var items = raw.Select(x => new PipelineItemModel
             {
                 Id = x.Id,
@@ -74,8 +91,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 StageStr = x.Stage.GetDescription(),
                 Source = x.Source,
                 SourceStr = x.Source.GetDescription(),
-                DaysInStage = (int)(DateTime.UtcNow - (x.LastMovedOn == default ? DateTime.UtcNow : x.LastMovedOn)).TotalDays
+                DaysInStage = (int)( DateTime.UtcNow - (x.LastMovedOn == default ? DateTime.UtcNow : x.LastMovedOn)).TotalDays
             }).ToList();
+
             var result = new PipelineResultModel
             {
                 TotalCount = total,
@@ -83,7 +101,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 PageSize = request.PageSize,
                 Items = items
             };
-            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Pipeline retrieved", result);
+
+            return new ApiResponse( false, StatusCodes.Status200OK, "Pipeline retrieved", result);
         }
     }
 }

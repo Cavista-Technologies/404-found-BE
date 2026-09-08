@@ -12,9 +12,9 @@ namespace Cavista.CTRecruita.Data.Entities.Roles
 {
     public class Interview : BaseEntity
     {
-        [ForeignKey(nameof(Application))]
-        public long ApplicationId { get; set; }
-        public Application Application { get; set; }
+        [ForeignKey(nameof(ApplicationCandidate))]
+        public long ApplicationCandidateId { get; set; }
+        public ApplicationCandidate ApplicationCandidate { get; set; }
         public DateTime ScheduledAt { get; set; }
         public int DurationMinutes { get; set; }
         public InterviewMode Mode { get; set; }

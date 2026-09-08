@@ -38,35 +38,46 @@ namespace Cavista.CTRecruita.Queries.JobRoles
     public class GetJobRoleApplicantsHandler : IRequestHandler<GetJobRoleApplicantsQuery, ApiResponse>
     {
         private readonly ApplicationReadOnlyContext _context;
+
         public GetJobRoleApplicantsHandler(ApplicationReadOnlyContext context)
         {
             _context = context;
         }
-        public async Task<ApiResponse> Handle(GetJobRoleApplicantsQuery request, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse> Handle(
+            GetJobRoleApplicantsQuery request,
+            CancellationToken cancellationToken)
         {
-            var baseQuery = _context.Applications
-                .Include(a => a.Candidate)
-                .Where(a => a.JobRoleId == request.JobRoleId);
+            var baseQuery = _context.ApplicationCandidates
+                .AsNoTracking()
+                .Include(ac => ac.Candidate)
+                .Include(ac => ac.Application)
+                .Where(ac => ac.Application.JobRoleId == request.JobRoleId);
+
             var total = await baseQuery.CountAsync(cancellationToken);
+
             var items = await baseQuery
-                .OrderByDescending(a => a.AppliedOn)
+                .OrderByDescending(ac => ac.AppliedOn)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(a => new ApplicantItemModel
+                .Select(ac => new ApplicantItemModel
                 {
-                    Id = a.Id,
-                    CandidateName = a.Candidate.FirstName + " " + a.Candidate.LastName,
-                    Email = a.Candidate.Email,
-                    PhoneNumber = a.Candidate.PhoneNumber,
-                    Stage = a.Stage,
-                    StageStr = a.Stage.GetDescription(),
-                    Status = a.Status,
-                    StatusStr = a.Status.GetDescription(),
-                    Source = a.Source,
-                    SourceStr = a.Source.GetDescription(),
-                    AppliedOn = a.AppliedOn
+                    Id = ac.Id,
+                    CandidateName =
+                        ((ac.Candidate.FirstName ?? string.Empty) + " " +
+                         (ac.Candidate.LastName ?? string.Empty)).Trim(),
+                    Email = ac.Candidate.Email,
+                    PhoneNumber = ac.Candidate.PhoneNumber,
+                    Stage = ac.Stage,
+                    StageStr = ac.Stage.GetDescription(),
+                    Status = ac.Status,
+                    StatusStr = ac.Status.GetDescription(),
+                    Source = ac.Source,
+                    SourceStr = ac.Source.GetDescription(),
+                    AppliedOn = ac.AppliedOn
                 })
                 .ToListAsync(cancellationToken);
+
             var result = new ApplicantsResultModel
             {
                 TotalCount = total,
@@ -74,7 +85,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 PageSize = request.PageSize,
                 Items = items
             };
-            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Applicants retrieved", result);
+
+            return new ApiResponse( false, StatusCodes.Status200OK, "Applicants retrieved", result);
         }
     }
 }

@@ -44,45 +44,146 @@ namespace Cavista.CTRecruita.Commands.Applications
             var form = await _context.ApplicationForms
                 .Include(f => f.Fields)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(f => f.Slug == request.Slug && f.Status == FormStatus.Published, cancellationToken);
+                .FirstOrDefaultAsync(
+                    f => f.Slug == request.Slug &&
+                         f.Status == FormStatus.Published,
+                    cancellationToken);
+
             if (form is null)
-                return new ApiResponse(true, (int)StatusCodes.Status404NotFound, "Application form not found");
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status404NotFound,
+                    "Application form not found");
+
             if (request.Files.Count != request.FileFieldIds.Count)
-                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, "Each uploaded file must have a matching field id");
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status400BadRequest,
+                    "Each uploaded file must have a matching field id");
+
             if (!TryParseAnswers(request.AnswersJson, out var answers))
-                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, "Answers payload is not valid JSON");
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status400BadRequest,
+                    "Answers payload is not valid JSON");
+
             var fieldsById = form.Fields.ToDictionary(f => f.Id);
+
             var fileError = ValidateFiles(request, fieldsById);
+
             if (fileError != null)
-                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, fileError);
-            var missing = GetMissingRequiredFields(form.Fields, request, answers);
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status400BadRequest,
+                    fileError);
+
+            var missing = GetMissingRequiredFields(
+                form.Fields,
+                request,
+                answers);
+
             if (missing.Count != 0)
-                return new ApiResponse(true, (int)StatusCodes.Status400BadRequest, $"Missing required: {string.Join(", ", missing)}");
-            var savedFiles = await SaveFilesAsync(request, cancellationToken);
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status400BadRequest,
+                    $"Missing required: {string.Join(", ", missing)}");
+
+            var savedFiles = await SaveFilesAsync(
+                request,
+                cancellationToken);
+
             var (firstName, lastName) = SplitFullName(request.FullName);
-            var application = new Application
+
+            var candidate = await _context.Candidates
+                .FirstOrDefaultAsync(
+                    x => x.Email == request.Email,
+                    cancellationToken);
+
+            if (candidate == null)
             {
-                JobRoleId = form.JobRoleId,
-                Source = request.Source,
-                Stage = ApplicationStage.Applied,
-                Status = ApplicationStatus.Active,
-                AppliedOn = DateTime.UtcNow,
-                Candidate = new Candidate
+                candidate = new Candidate
                 {
                     FirstName = firstName,
                     LastName = lastName,
                     Email = request.Email,
                     PhoneNumber = request.Phone
-                },
+                };
+
+                _context.Candidates.Add(candidate);
+
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var application = await _context.Applications
+                .FirstOrDefaultAsync(
+                    x => x.JobRoleId == form.JobRoleId,
+                    cancellationToken);
+
+            if (application == null)
+            {
+                application = new Application
+                {
+                    JobRoleId = form.JobRoleId,
+                    Name = form.Title,
+                    IsActive = true
+                };
+
+                _context.Applications.Add(application);
+
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            var existingApplication = await _context.ApplicationCandidates
+                .AnyAsync(
+                    x => x.ApplicationId == application.Id &&
+                         x.CandidateId == candidate.Id,
+                    cancellationToken);
+
+            if (existingApplication)
+            {
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status409Conflict,
+                    "Candidate has already applied");
+            }
+
+            var applicationCandidate = new ApplicationCandidate
+            {
+                ApplicationId = application.Id,
+                CandidateId = candidate.Id,
+                Stage = ApplicationStage.Applied,
+                Status = ApplicationStatus.Active,
+                AppliedOn = DateTime.UtcNow,
+
                 Answers = answers
-                    .Where(a => fieldsById.TryGetValue(a.FormFieldId, out var f) && !f.IsStandard)
-                    .Select(a => new ApplicationAnswer { FormFieldId = a.FormFieldId, Value = a.Value })
+                    .Where(a => fieldsById.TryGetValue( a.FormFieldId, out var field) && !field.IsStandard)
+                    .Select(a => new ApplicationAnswer
+                    {
+                        FormFieldId = a.FormFieldId,
+                        Value = a.Value
+                    })
                     .Concat(savedFiles)
-                    .ToList()
+                    .ToList(),
+
+                StageHistory = new List<ApplicationCandidateStageHistory>
+                {
+                    new ApplicationCandidateStageHistory
+                    {
+                        FromStage = ApplicationStage.Applied,
+                        ToStage = ApplicationStage.Applied,
+                        ChangedOn = DateTime.UtcNow
+                    }
+                }
             };
-            _context.Applications.Add(application);
+
+            _context.ApplicationCandidates.Add(applicationCandidate);
+
             await _context.SaveChangesAsync(cancellationToken);
-            return new ApiResponse(false, (int)StatusCodes.Status201Created, "Application submitted");
+
+            return new ApiResponse(
+                false,
+                (int)StatusCodes.Status201Created,
+                "Application submitted");
         }
         private static bool TryParseAnswers(string json, out List<AnswerDto> answers)
         {

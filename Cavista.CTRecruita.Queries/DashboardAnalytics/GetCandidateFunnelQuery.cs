@@ -12,7 +12,10 @@ using System.Threading.Tasks;
 
 namespace Cavista.CTRecruita.Queries.DashboardAnalytics
 {
-    public class GetCandidateFunnelQuery : IRequest<ApiResponse> { }
+    public class GetCandidateFunnelQuery : IRequest<ApiResponse>
+    {
+    }
+
     public class CandidateFunnelModel
     {
         public int Applicants { get; set; }
@@ -21,6 +24,7 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
         public int Offers { get; set; }
         public int Hires { get; set; }
     }
+
     public class GetCandidateFunnelHandler : IRequestHandler<GetCandidateFunnelQuery, ApiResponse>
     {
         private static readonly Dictionary<ApplicationStage, int> StageOrder = new()
@@ -33,54 +37,79 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
         };
 
         private readonly ApplicationReadOnlyContext _context;
+
         public GetCandidateFunnelHandler(ApplicationReadOnlyContext context)
         {
             _context = context;
         }
-        private class ApplicationStageInfo
+
+        private class ApplicationCandidateStageInfo
         {
             public ApplicationStage Stage { get; set; }
-            public List<StageTransition> History { get; set; }
+            public List<StageTransition> History { get; set; } = new();
         }
+
         private class StageTransition
         {
             public ApplicationStage FromStage { get; set; }
             public ApplicationStage ToStage { get; set; }
         }
-        private static int MaxReached(ApplicationStageInfo app)
+
+        private static int MaxReached(ApplicationCandidateStageInfo candidate)
         {
-            int max = StageOrder.TryGetValue(app.Stage, out int s) ? s : 0;
-            foreach (var h in app.History)
+            int max = StageOrder.TryGetValue(candidate.Stage, out var current) ? current : 0;
+
+            foreach (var history in candidate.History)
             {
-                if (StageOrder.TryGetValue(h.FromStage, out int f)) max = Math.Max(max, f);
-                if (StageOrder.TryGetValue(h.ToStage, out int t)) max = Math.Max(max, t);
+                if (StageOrder.TryGetValue(history.FromStage, out var from))
+                {
+                    max = Math.Max(max, from);
+                }
+
+                if (StageOrder.TryGetValue(history.ToStage, out var to))
+                {
+                    max = Math.Max(max, to);
+                }
             }
             return max;
         }
-        public async Task<ApiResponse> Handle(GetCandidateFunnelQuery request, CancellationToken cancellationToken)
+
+        public async Task<ApiResponse> Handle(
+            GetCandidateFunnelQuery request,
+            CancellationToken cancellationToken)
         {
-            var applications = await _context.Applications
-                .Include(a => a.StageHistory)
-                .Select(a => new ApplicationStageInfo
+            var candidates = await _context.ApplicationCandidates
+                .AsNoTracking()
+                .Include(x => x.StageHistory)
+                .Select(x => new ApplicationCandidateStageInfo
                 {
-                    Stage = a.Stage,
-                    History = a.StageHistory.Select(h => new StageTransition
-                    {
-                        FromStage = h.FromStage,
-                        ToStage = h.ToStage
-                    }).ToList()
+                    Stage = x.Stage,
+
+                    History = x.StageHistory
+                        .Select(h => new StageTransition
+                        {
+                            FromStage = h.FromStage,
+                            ToStage = h.ToStage
+                        })
+                        .ToList()
                 })
                 .ToListAsync(cancellationToken);
-            var reached = applications.Select(MaxReached).ToList();
+
+            var reached = candidates
+                .Select(MaxReached)
+                .ToList();
+
             var result = new CandidateFunnelModel
             {
                 Applicants = reached.Count,
-                Screened = reached.Count(r => r >= StageOrder[ApplicationStage.Screen]),
-                Interviewed = reached.Count(r => r >= StageOrder[ApplicationStage.Interview]),
-                Offers = reached.Count(r => r >= StageOrder[ApplicationStage.Offer]),
-                Hires = reached.Count(r => r >= StageOrder[ApplicationStage.Hired])
+
+                Screened = reached.Count(x => x >= StageOrder[ApplicationStage.Screen]),
+                Interviewed = reached.Count(x => x >= StageOrder[ApplicationStage.Interview]),
+                Offers = reached.Count(x => x >= StageOrder[ApplicationStage.Offer]),
+                Hires = reached.Count(x => x >= StageOrder[ApplicationStage.Hired])
             };
-            return new ApiResponse(false, (int)StatusCodes.Status200OK, "Funnel retrieved", result);
+
+            return new ApiResponse( false, StatusCodes.Status200OK, "Funnel retrieved", result);
         }
     }
 }
