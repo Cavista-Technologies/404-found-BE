@@ -59,6 +59,7 @@ namespace Cavista.CTRecruita.Commands.Applications
             if (missing.Count != 0)
                 return new ApiResponse(true, StatusCodes.Status400BadRequest, $"Missing required: {string.Join(", ", missing)}");
             var savedFiles = await SaveFilesAsync(request, cancellationToken);
+            var (firstName, lastName) = SplitFullName(request.FullName);
             var application = new Application
             {
                 JobRoleId = form.JobRoleId,
@@ -139,6 +140,18 @@ namespace Cavista.CTRecruita.Commands.Applications
                     missing.Add(f.Label);
             }
             return missing;
+        }
+        private static (string FirstName, string LastName) SplitFullName(string fullName)
+        {
+            if (string.IsNullOrWhiteSpace(fullName))
+                return (string.Empty, string.Empty);
+            var parts = fullName.Trim().Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length switch
+            {
+                0 => (string.Empty, string.Empty),
+                1 => (parts[0], string.Empty),
+                _ => (parts[0], parts[1])
+            };
         }
         private async Task<List<ApplicationAnswer>> SaveFilesAsync(SubmitApplicationCommand request, CancellationToken cancellationToken)
         {
