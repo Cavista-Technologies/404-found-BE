@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
@@ -20,8 +21,11 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string Email { get; set; }
         public string PhoneNumber { get; set; }
         public ApplicationStage Stage { get; set; }
+        public string StageStr { get; set; }
         public ApplicationStatus Status { get; set; }
+        public string StatusStr { get; set; }
         public ApplicationSource Source { get; set; }
+        public string SourceStr { get; set; }
         public DateTime AppliedOn { get; set; }
     }
     public class ApplicantsResultModel
@@ -55,8 +59,11 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     Email = a.Candidate.Email,
                     PhoneNumber = a.Candidate.PhoneNumber,
                     Stage = a.Stage,
+                    StageStr = a.Stage.GetDescription(),
                     Status = a.Status,
+                    StatusStr = a.Status.GetDescription(),
                     Source = a.Source,
+                    SourceStr = a.Source.GetDescription(),
                     AppliedOn = a.AppliedOn
                 })
                 .ToListAsync(cancellationToken);

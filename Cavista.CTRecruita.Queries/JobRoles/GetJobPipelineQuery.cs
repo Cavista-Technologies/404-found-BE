@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
@@ -24,7 +25,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string CandidateName { get; set; }
         public string Email { get; set; }
         public ApplicationStage Stage { get; set; }
+        public string StageStr { get; set; }
         public ApplicationSource Source { get; set; }
+        public string SourceStr { get; set; }
         public int DaysInStage { get; set; }
     }
     public class PipelineResultModel
@@ -68,7 +71,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 CandidateName = x.CandidateName,
                 Email = x.Email,
                 Stage = x.Stage,
+                StageStr = x.Stage.GetDescription(),
                 Source = x.Source,
+                SourceStr = x.Source.GetDescription(),
                 DaysInStage = (int)(DateTime.UtcNow - (x.LastMovedOn == default ? DateTime.UtcNow : x.LastMovedOn)).TotalDays
             }).ToList();
             var result = new PipelineResultModel
