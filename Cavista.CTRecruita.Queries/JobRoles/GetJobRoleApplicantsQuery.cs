@@ -27,6 +27,12 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public ApplicationSource Source { get; set; }
         public string SourceStr { get; set; }
         public DateTime AppliedOn { get; set; }
+        public List<ApplicantFileModel> Files { get; set; } = new();
+    }
+    public class ApplicantFileModel
+    {
+        public string FieldName { get; set; }
+        public string FileUrl { get; set; }
     }
     public class ApplicantsResultModel
     {
@@ -52,6 +58,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 .AsNoTracking()
                 .Include(ac => ac.Candidate)
                 .Include(ac => ac.Application)
+                .Include(ac => ac.Answers)
+                    .ThenInclude(a => a.FormField)
                 .Where(ac => ac.Application.JobRoleId == request.JobRoleId);
 
             var total = await baseQuery.CountAsync(cancellationToken);
@@ -63,9 +71,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 .Select(ac => new ApplicantItemModel
                 {
                     Id = ac.Id,
-                    CandidateName =
-                        ((ac.Candidate.FirstName ?? string.Empty) + " " +
-                         (ac.Candidate.LastName ?? string.Empty)).Trim(),
+                    CandidateName = ((ac.Candidate.FirstName ?? string.Empty) + " " + (ac.Candidate.LastName ?? string.Empty)).Trim(),
                     Email = ac.Candidate.Email,
                     PhoneNumber = ac.Candidate.PhoneNumber,
                     Stage = ac.Stage,
@@ -74,7 +80,15 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     StatusStr = ac.Status.GetDescription(),
                     Source = ac.Source,
                     SourceStr = ac.Source.GetDescription(),
-                    AppliedOn = ac.AppliedOn
+                    AppliedOn = ac.AppliedOn,
+                    Files = ac.Answers
+                    .Where(a => a.FormField.FieldType == FormFieldType.FileUpload)
+                    .Select(a => new ApplicantFileModel
+                    {
+                        FieldName = a.FormField.Label,
+                        FileUrl = a.Value
+                    })
+                    .ToList()
                 })
                 .ToListAsync(cancellationToken);
 
