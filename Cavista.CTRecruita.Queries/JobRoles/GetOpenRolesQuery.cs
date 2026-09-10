@@ -55,6 +55,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 query = query.Where(x => x.DepartmentId == request.DepartmentId.Value);
             if (request.Status.HasValue)
                 query = query.Where(x => x.Status == request.Status.Value);
+            
             var roles = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new GetRoleDetailQueryModel
@@ -73,16 +74,13 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     RecruiterName = x.RecruiterName,
                     HiringManagerName = x.HiringManagerName,
                     HiringManagerEmail = x.HiringManagerEmail,
-                    SlaPercent = x.SlaTargetDays > 0
-                        ? Math.Min(
-                            100,
-                            (int)((DateTime.UtcNow - x.CreatedAt).TotalDays * 100.0 / x.SlaTargetDays))
-                        : 0,
+                    //SlaPercent = x.SlaTargetDays,
                     TargetHireDate = x.TargetHireDate,
                     //PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
                     ApplicantsCount = x.Applications.Count()
                 })
                 .PaginateAsync(request.Page, request.PageLength);
+                
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
         }
     }
