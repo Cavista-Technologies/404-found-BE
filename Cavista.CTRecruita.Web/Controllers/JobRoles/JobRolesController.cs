@@ -67,14 +67,13 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
             return PrepareResponse(response);
         }
 
-        [HttpPut("candidates/{candidateId}/stage")]
-        public async Task<IActionResult> UpdateApplicationStage( long candidateId, MoveApplicationStageCommand request)
+        [HttpPut("candidates/stage")]
+        public async Task<IActionResult> UpdateApplicationStage(MoveApplicationStageCommand request)
         {
             var response = await _mediator.Send(
                 new MoveApplicationStageCommand
                 {
-                    ApplicationId = request.ApplicationId,
-                    CandidateId = candidateId,
+                    ApplicationCandidateId = request.ApplicationCandidateId,
                     CurrentUserId = CurrentUserId,
                     ToStage = request.ToStage,
                     Reason = request.Reason

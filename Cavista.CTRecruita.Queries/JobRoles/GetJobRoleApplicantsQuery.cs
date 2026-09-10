@@ -5,6 +5,7 @@ using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Cavista.CTRecruita.Queries.JobRoles
 {
@@ -44,10 +45,12 @@ namespace Cavista.CTRecruita.Queries.JobRoles
     public class GetJobRoleApplicantsHandler : IRequestHandler<GetJobRoleApplicantsQuery, ApiResponse>
     {
         private readonly ApplicationReadOnlyContext _context;
+        private readonly IConfiguration _configuration;
 
-        public GetJobRoleApplicantsHandler(ApplicationReadOnlyContext context)
+        public GetJobRoleApplicantsHandler(ApplicationReadOnlyContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse> Handle(
@@ -55,15 +58,13 @@ namespace Cavista.CTRecruita.Queries.JobRoles
             CancellationToken cancellationToken)
         {
             var baseQuery = _context.ApplicationCandidates
-                .AsNoTracking()
-                .Include(ac => ac.Candidate)
-                .Include(ac => ac.Application)
-                .Include(ac => ac.Answers)
-                    .ThenInclude(a => a.FormField)
-                .Where(ac => ac.Application.JobRoleId == request.JobRoleId);
-
+       .AsNoTracking()
+       .Include(ac => ac.Candidate)
+       .Include(ac => ac.Application)
+       .Include(ac => ac.Answers)
+           .ThenInclude(a => a.FormField)
+       .Where(ac => ac.Application.JobRoleId == request.JobRoleId);
             var total = await baseQuery.CountAsync(cancellationToken);
-
             var items = await baseQuery
                 .OrderByDescending(ac => ac.AppliedOn)
                 .Skip((request.PageNumber - 1) * request.PageSize)
@@ -82,16 +83,23 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     SourceStr = ac.Source.GetDescription(),
                     AppliedOn = ac.AppliedOn,
                     Files = ac.Answers
-                    .Where(a => a.FormField.FieldType == FormFieldType.FileUpload)
-                    .Select(a => new ApplicantFileModel
-                    {
-                        FieldName = a.FormField.Label,
-                        FileUrl = a.Value
-                    })
-                    .ToList()
+                        .Where(a => a.FormField.FieldType == FormFieldType.FileUpload)
+                        .Select(a => new ApplicantFileModel
+                        {
+                            FieldName = a.FormField.Label,
+                            FileUrl = a.Value
+                        })
+                        .ToList()
                 })
                 .ToListAsync(cancellationToken);
-
+            var baseUrl = (_configuration["FileStorage:BaseUrl"] ?? string.Empty).TrimEnd('/');
+            if (!string.IsNullOrEmpty(baseUrl))
+            {
+                foreach (var item in items)
+                    foreach (var file in item.Files)
+                        if (!string.IsNullOrWhiteSpace(file.FileUrl) && file.FileUrl.StartsWith("/"))
+                            file.FileUrl = baseUrl + file.FileUrl;
+            }
             var result = new ApplicantsResultModel
             {
                 TotalCount = total,
@@ -99,7 +107,6 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 PageSize = request.PageSize,
                 Items = items
             };
-
             return new ApiResponse( false, StatusCodes.Status200OK, "Applicants retrieved", result);
         }
     }

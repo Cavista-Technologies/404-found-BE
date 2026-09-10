@@ -10,9 +10,7 @@ namespace Cavista.CTRecruita.Commands.Applications
 {
     public class MoveApplicationStageCommand : IRequest<ApiResponse>
     {
-        public long ApplicationId { get; set; }
-
-        public long CandidateId { get; set; }
+        public long ApplicationCandidateId { get; set; }
 
         public long CurrentUserId { get; set; }
 
@@ -32,10 +30,7 @@ namespace Cavista.CTRecruita.Commands.Applications
         {
             var applicationCandidate = await _context.ApplicationCandidates
                 .Include(x => x.StageHistory)
-                .FirstOrDefaultAsync(
-                    x => x.ApplicationId == request.ApplicationId &&
-                            x.CandidateId == request.CandidateId,
-                    cancellationToken);
+                .FirstOrDefaultAsync( x => x.Id == request.ApplicationCandidateId, cancellationToken);
 
             if (applicationCandidate == null)
             {

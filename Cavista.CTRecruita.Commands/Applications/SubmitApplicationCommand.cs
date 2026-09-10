@@ -255,13 +255,16 @@ namespace Cavista.CTRecruita.Commands.Applications
                 _ => (parts[0], parts[1])
             };
         }
-        private async Task<List<ApplicationAnswer>> SaveFilesAsync(SubmitApplicationCommand request, CancellationToken cancellationToken)
+        private async Task<List<ApplicationAnswer>> SaveFilesAsync( SubmitApplicationCommand request, CancellationToken cancellationToken)
         {
             if (request.Files.Count == 0)
                 return new List<ApplicationAnswer>();
-            var uploadRoot = _configuration["FileStorage:UploadPath"]
-                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", UploadFolder);
+            var configuredPath = _configuration["FileStorage:UploadPath"] ?? UploadFolder;
+            var uploadRoot = Path.IsPathRooted(configuredPath)
+                ? configuredPath
+                : Path.Combine(AppContext.BaseDirectory, configuredPath);
             Directory.CreateDirectory(uploadRoot);
+            var publicPath = _configuration["FileStorage:PublicPath"] ?? $"/{UploadFolder}";
             var saved = new List<ApplicationAnswer>(request.Files.Count);
             for (int i = 0; i < request.Files.Count; i++)
             {
@@ -272,7 +275,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                 saved.Add(new ApplicationAnswer
                 {
                     FormFieldId = request.FileFieldIds[i],
-                    Value = $"/{UploadFolder}/{storedName}"
+                    Value = $"{publicPath}/{storedName}"
                 });
             }
             return saved;
