@@ -26,6 +26,7 @@ namespace Cavista.CTRecruita.Commands.Roles
         public DateTime? TargetHireDate { get; set; }
         public string SalaryRange { get; set; }
         public string Reason { get; set; }
+        public bool Activate { get; set; }
     }
     public class UpdateJobHandler : IRequestHandler<UpdateJobCommand, ApiResponse>
     {
@@ -57,6 +58,7 @@ namespace Cavista.CTRecruita.Commands.Roles
             job.TargetHireDate = request.TargetHireDate;
             job.SalaryRange = request.SalaryRange;
             job.Reason = request.Reason;
+            job.Status = request.Activate ? JobStatus.Open : JobStatus.Draft;
             job.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Role updated");

@@ -73,9 +73,11 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     RecruiterName = x.RecruiterName,
                     HiringManagerName = x.HiringManagerName,
                     HiringManagerEmail = x.HiringManagerEmail,
-                    //SlaPercent = x.SlaTargetDays > 0
-                    //    ? Math.Min(100, (int)(EF.Functions.DateDiffDay(x.CreatedAt, DateTime.UtcNow) * 100.0 / x.SlaTargetDays))
-                    //    : 0,
+                    SlaPercent = x.SlaTargetDays > 0
+                        ? Math.Min(
+                            100,
+                            (int)((DateTime.UtcNow - x.CreatedAt).TotalDays * 100.0 / x.SlaTargetDays))
+                        : 0,
                     TargetHireDate = x.TargetHireDate,
                     //PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
                     ApplicantsCount = x.Applications.Count()
