@@ -208,17 +208,17 @@ app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseSerilogRequestLogging();
-//app.UseHangfireDashboard("/jobs", new DashboardOptions
-//{
-//    Authorization =
-//        [
-//            new HangfireCustomBasicAuthenticationFilter
-//                    {
-//                        Pass = hangfirePassword,
-//                        User = hangfireUsername
-//                    }
-//        ]
-//});
+app.UseHangfireDashboard("/jobs", new DashboardOptions
+{
+    Authorization =
+        [
+            new HangfireCustomBasicAuthenticationFilter
+                    {
+                        Pass = hangfirePassword,
+                        User = hangfireUsername
+                    }
+        ]
+});
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

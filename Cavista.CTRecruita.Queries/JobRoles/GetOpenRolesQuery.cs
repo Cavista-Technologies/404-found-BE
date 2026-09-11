@@ -55,7 +55,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 query = query.Where(x => x.DepartmentId == request.DepartmentId.Value);
             if (request.Status.HasValue)
                 query = query.Where(x => x.Status == request.Status.Value);
-            
+
             var roles = await query
                 .OrderByDescending(x => x.CreatedAt)
                 .Select(x => new GetRoleDetailQueryModel
@@ -80,8 +80,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     ApplicantsCount = x.Applications.Count()
                 })
                 .PaginateAsync(request.Page, request.PageLength);
-                
+
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
         }
     }
+
 }
