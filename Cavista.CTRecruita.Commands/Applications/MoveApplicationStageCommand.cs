@@ -84,6 +84,7 @@ namespace Cavista.CTRecruita.Commands.Applications
             var applicationCandidate = await _context.ApplicationCandidates
                 .Include(x => x.Candidate)
                 .Include(x => x.Application)
+                    .ThenInclude(a => a.JobRole)
                 .FirstOrDefaultAsync(x => x.Id == applicationCandidateId);
             if (applicationCandidate?.Candidate == null)
             {
@@ -95,19 +96,30 @@ namespace Cavista.CTRecruita.Commands.Applications
             var candidate = applicationCandidate.Candidate;
             var (templateKey, emailSubject) = ResolveEmailTemplate(toStage);
             var templatePath = _config[templateKey] ?? _config["EmailTemplates:ApplicationStageMovedEmail"];
-            if (string.IsNullOrWhiteSpace(templatePath) || !File.Exists(templatePath))
+            if (string.IsNullOrWhiteSpace(templatePath))
             {
                 _logger.LogWarning(
-                    "SendApplicationStageMovedEmail skipped - template {TemplateKey} not configured or missing for stage {ToStage}",
+                    "SendApplicationStageMovedEmail skipped - template key {TemplateKey} not configured for stage {ToStage}",
                     templateKey,
                     toStage);
                 return;
             }
+            var fullPath = Path.IsPathRooted(templatePath)
+               ? templatePath
+               : Path.Combine(AppContext.BaseDirectory, templatePath);
+            if (!File.Exists(fullPath))
+            {
+                _logger.LogWarning(
+                    "SendApplicationStageMovedEmail skipped - template file not found at {FullPath} for stage {ToStage}",
+                    fullPath,
+                    toStage);
+                return;
+            }
             var appLink = _config["SPAURL"];
-            var emailTemplate = await File.ReadAllTextAsync(templatePath);
+            var emailTemplate = await File.ReadAllTextAsync(fullPath);
             var emailBody = emailTemplate
                 .Replace("{firstName}", candidate.FirstName)
-                .Replace("{role}", applicationCandidate.Application?.JobRole.Title ?? string.Empty)
+                .Replace("{role}", applicationCandidate.Application?.JobRole?.Title ?? string.Empty)
                 .Replace("{fromStage}", fromStage.ToString())
                 .Replace("{toStage}", toStage.ToString())
                 .Replace("{reason}", reason ?? "N/A")

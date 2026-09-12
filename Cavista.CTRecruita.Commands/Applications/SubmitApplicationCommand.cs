@@ -5,6 +5,8 @@ using Cavista.CTRecruita.Data.Entities.Roles;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
@@ -18,7 +20,7 @@ namespace Cavista.CTRecruita.Commands.Applications
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public string AnswersJson { get; set; } = "[]";
+        public List<string> AnswersJson { get; set; } = new();
         public List<IFormFile> Files { get; set; } = new();
         public List<long> FileFieldIds { get; set; } = new();
     }
@@ -30,6 +32,7 @@ namespace Cavista.CTRecruita.Commands.Applications
     public class SubmitApplicationHandler : IRequestHandler<SubmitApplicationCommand, ApiResponse>
     {
         private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase) { ".pdf", ".doc", ".docx" };
+        private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
         private const long MaxFileSizeBytes = 5 * 1024 * 1024;
         private const string UploadFolder = "uploads/applications";
         private readonly ApplicationContext _context;
@@ -48,57 +51,55 @@ namespace Cavista.CTRecruita.Commands.Applications
                     f => f.Slug == request.Slug &&
                          f.Status == FormStatus.Published,
                     cancellationToken);
-
             if (form is null)
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status404NotFound,
                     "Application form not found");
-
             if (request.Files.Count != request.FileFieldIds.Count)
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status400BadRequest,
                     "Each uploaded file must have a matching field id");
-
-            if (!TryParseAnswers(request.AnswersJson, out var answers))
+            if (!TryParseAnswers(request.AnswersJson, out var answers, out var jsonError))
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status400BadRequest,
-                    "Answers payload is not valid JSON");
-
+                    $"Answers payload is not valid JSON: {jsonError}");
             var fieldsById = form.Fields.ToDictionary(f => f.Id);
-
+            var unknown = answers
+                .Select(a => a.FormFieldId)
+                .Where(id => !fieldsById.ContainsKey(id))
+                .Distinct()
+                .ToList();
+            if (unknown.Count != 0)
+                return new ApiResponse(
+                    true,
+                    (int)StatusCodes.Status400BadRequest,
+                    $"Unknown field ids: {string.Join(", ", unknown)}");
             var fileError = ValidateFiles(request, fieldsById);
-
             if (fileError != null)
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status400BadRequest,
                     fileError);
-
             var missing = GetMissingRequiredFields(
                 form.Fields,
                 request,
                 answers);
-
             if (missing.Count != 0)
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status400BadRequest,
                     $"Missing required: {string.Join(", ", missing)}");
-
             var savedFiles = await SaveFilesAsync(
                 request,
                 cancellationToken);
-
             var (firstName, lastName) = SplitFullName(request.FullName);
-
             var candidate = await _context.Candidates
                 .FirstOrDefaultAsync(
                     x => x.Email == request.Email,
                     cancellationToken);
-
             if (candidate == null)
             {
                 candidate = new Candidate
@@ -108,17 +109,13 @@ namespace Cavista.CTRecruita.Commands.Applications
                     Email = request.Email,
                     PhoneNumber = request.Phone
                 };
-
                 _context.Candidates.Add(candidate);
-
                 await _context.SaveChangesAsync(cancellationToken);
             }
-
             var application = await _context.Applications
                 .FirstOrDefaultAsync(
                     x => x.JobRoleId == form.JobRoleId,
                     cancellationToken);
-
             if (application == null)
             {
                 application = new Application
@@ -127,26 +124,19 @@ namespace Cavista.CTRecruita.Commands.Applications
                     Name = form.Title,
                     IsActive = true
                 };
-
                 _context.Applications.Add(application);
-
                 await _context.SaveChangesAsync(cancellationToken);
             }
-
             var existingApplication = await _context.ApplicationCandidates
                 .AnyAsync(
                     x => x.ApplicationId == application.Id &&
                          x.CandidateId == candidate.Id,
                     cancellationToken);
-
             if (existingApplication)
-            {
                 return new ApiResponse(
                     true,
                     (int)StatusCodes.Status409Conflict,
                     "Candidate has already applied");
-            }
-
             var applicationCandidate = new ApplicationCandidate
             {
                 ApplicationId = application.Id,
@@ -154,9 +144,8 @@ namespace Cavista.CTRecruita.Commands.Applications
                 Stage = ApplicationStage.Applied,
                 Status = ApplicationStatus.Active,
                 AppliedOn = DateTime.UtcNow,
-
                 Answers = answers
-                    .Where(a => fieldsById.TryGetValue( a.FormFieldId, out var field) && !field.IsStandard)
+                    .Where(a => fieldsById.TryGetValue(a.FormFieldId, out var field) && !field.IsStandard)
                     .Select(a => new ApplicationAnswer
                     {
                         FormFieldId = a.FormFieldId,
@@ -164,39 +153,41 @@ namespace Cavista.CTRecruita.Commands.Applications
                     })
                     .Concat(savedFiles)
                     .ToList(),
-
                 StageHistory = new List<ApplicationCandidateStageHistory>
-                {
-                    new ApplicationCandidateStageHistory
-                    {
-                        FromStage = ApplicationStage.Applied,
-                        ToStage = ApplicationStage.Applied,
-                        ChangedOn = DateTime.UtcNow
-                    }
-                }
+           {
+               new ApplicationCandidateStageHistory
+               {
+                   FromStage = ApplicationStage.Applied,
+                   ToStage = ApplicationStage.Applied,
+                   ChangedOn = DateTime.UtcNow
+               }
+           }
             };
-
             _context.ApplicationCandidates.Add(applicationCandidate);
-
             await _context.SaveChangesAsync(cancellationToken);
-
             return new ApiResponse(
                 false,
                 (int)StatusCodes.Status201Created,
                 "Application submitted");
         }
-        private static bool TryParseAnswers(string json, out List<AnswerDto> answers)
+        private static bool TryParseAnswers(List<string> parts, out List<AnswerDto> answers, out string? error)
         {
             answers = new List<AnswerDto>();
-            if (string.IsNullOrWhiteSpace(json))
+            error = null;
+            var values = parts.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()).ToList();
+            if (values.Count == 0)
                 return true;
+            var payload = values.Count == 1 && values[0].StartsWith('[')
+                ? values[0]
+                : $"[{string.Join(",", values.Select(v => v.Trim('[', ']')))}]";
             try
             {
-                answers = JsonSerializer.Deserialize<List<AnswerDto>>(json) ?? new List<AnswerDto>();
+                answers = JsonSerializer.Deserialize<List<AnswerDto>>(payload, JsonOptions) ?? new List<AnswerDto>();
                 return true;
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                error = ex.Message;
                 return false;
             }
         }
@@ -255,7 +246,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                 _ => (parts[0], parts[1])
             };
         }
-        private async Task<List<ApplicationAnswer>> SaveFilesAsync( SubmitApplicationCommand request, CancellationToken cancellationToken)
+        private async Task<List<ApplicationAnswer>> SaveFilesAsync(SubmitApplicationCommand request, CancellationToken cancellationToken)
         {
             if (request.Files.Count == 0)
                 return new List<ApplicationAnswer>();

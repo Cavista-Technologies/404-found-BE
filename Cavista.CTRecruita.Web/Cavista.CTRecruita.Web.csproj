@@ -32,16 +32,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\EmailTemplate\" />
+    <Folder Include="EmailTemplate\" />
     <Folder Include="Migrations\" />
     <Folder Include="wwwroot\uploads\applications\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Controllers\EmailTemplate\ApplicationInterviewEmail.txt">
+    <None Update="EmailTemplate\ApplicationInterviewEmail.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Controllers\EmailTemplate\ApplicationRejectedEmail.txt">
+    <None Update="EmailTemplate\ApplicationRejectedEmail.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

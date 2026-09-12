@@ -3,6 +3,7 @@ using Cavista.CTRecruita.Queries.ApplicationQueries;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.Asn1.Ocsp;
 
 namespace Cavista.CTRecruita.Web.Controllers.Application
 {
@@ -33,6 +34,7 @@ namespace Cavista.CTRecruita.Web.Controllers.Application
         [AllowAnonymous]
         public async Task<IActionResult> SubmitApplication([FromForm] SubmitApplicationCommand command)
         {
+            Console.WriteLine($"[SUBMIT] AnswersJson='{command.AnswersJson}' FileFieldIds={command.FileFieldIds.Count}");
             var response = await _mediator.Send(command);
             return PrepareResponse(response);
         }
