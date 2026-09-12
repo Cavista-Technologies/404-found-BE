@@ -26,14 +26,12 @@ namespace Cavista.CTRecruita.Commands.Applications
         private readonly ILogger<MoveApplicationStageHandler> _logger;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        public MoveApplicationStageHandler(ApplicationContext context, IBackgroundJobClient backgroundJobClient, ILogger<MoveApplicationStageHandler> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IEmailService emailService)
+        public MoveApplicationStageHandler(ApplicationContext context, IBackgroundJobClient backgroundJobClient, ILogger<MoveApplicationStageHandler> logger, IConfiguration configuration, IEmailService emailService)
         {
             _context = context;
             _backgroundJobClient = backgroundJobClient;
             _logger = logger;
             _config = configuration;
-            _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
         }
         public async Task<ApiResponse> Handle(MoveApplicationStageCommand request, CancellationToken cancellationToken)
@@ -117,7 +115,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                     toStage);
                 return;
             }
-            var hostUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}";
+            var hostUrl = _config["FileStorage:BaseUrl"];
             var appLink = _config["SPAURL"];
             var emailTemplate = await File.ReadAllTextAsync(fullPath);
             var emailBody = emailTemplate
