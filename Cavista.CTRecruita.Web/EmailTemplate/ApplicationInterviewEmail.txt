@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Business Continuity Email</title>
+    <title>Update on your Application (Cavista Technologies)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -169,7 +169,7 @@
                       style="margin: 0 8px; text-decoration: none"
                     >
                       <img
-                        src="{hostUrl}/Images/Employers/cavista-logo.jpg"
+                        src="{hostUrl}/Images/Employers/TwitterLogo.png"
                         alt="Twitter"
                         style="width: 32px; height: 32px"
                       />
@@ -199,7 +199,7 @@
                       style="margin: 0 8px; text-decoration: none"
                     >
                       <img
-                        src="{hostUrl}/Images/Icons/LinkedinLogo.png"
+                        src="{hostUrl}/Images/Icons/LinkedInLogo.png"
                         alt="LinkedIn"
                         style="width: 32px; height: 32px"
                       />

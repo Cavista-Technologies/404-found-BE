@@ -26,12 +26,14 @@ namespace Cavista.CTRecruita.Commands.Applications
         private readonly ILogger<MoveApplicationStageHandler> _logger;
         private readonly IConfiguration _config;
         private readonly IEmailService _emailService;
-        public MoveApplicationStageHandler(ApplicationContext context, IBackgroundJobClient backgroundJobClient, ILogger<MoveApplicationStageHandler> logger, IConfiguration configuration, IEmailService emailService)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public MoveApplicationStageHandler(ApplicationContext context, IBackgroundJobClient backgroundJobClient, ILogger<MoveApplicationStageHandler> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IEmailService emailService)
         {
             _context = context;
             _backgroundJobClient = backgroundJobClient;
             _logger = logger;
             _config = configuration;
+            _httpContextAccessor = httpContextAccessor;
             _emailService = emailService;
         }
         public async Task<ApiResponse> Handle(MoveApplicationStageCommand request, CancellationToken cancellationToken)
@@ -115,6 +117,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                     toStage);
                 return;
             }
+            var hostUrl = $"{_httpContextAccessor.HttpContext.Request.Scheme}://{_httpContextAccessor.HttpContext.Request.Host}";
             var appLink = _config["SPAURL"];
             var emailTemplate = await File.ReadAllTextAsync(fullPath);
             var emailBody = emailTemplate
@@ -124,6 +127,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                 .Replace("{toStage}", toStage.ToString())
                 .Replace("{reason}", reason ?? "N/A")
                 .Replace("{loginLink}", appLink)
+                .Replace("{hostUrl}", hostUrl)
                 .Replace("{year}", DateTime.Now.Year.ToString());
             await _emailService.SendMailAsync(emailSubject, emailBody, candidate.Email, false, null, null, null, null, null, null);
         }

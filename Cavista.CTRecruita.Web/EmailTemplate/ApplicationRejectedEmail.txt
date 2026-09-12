@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Update on your Application (Cavista Technologies)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body
+    style="margin: 0; padding: 0; font-family: &quot;Poppins&quot;, sans-serif"
+  >
+    <table
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="
+        max-width: 600px;
+        margin: auto;
+        background-color: #fff;
+        border: 1px solid #e4e7ec;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      "
+    >
+      <!-- Logo Section -->
+      <tr>
+        <td>
+          <!-- <img src="{{logoUrl}}" alt="Logo" style="margin:32px 24px; display:block; max-width:152px; height: 31px;" /> -->
+          <img
+            src="{hostUrl}/Images/Employers/cavista-logo.jpg"
+            alt="CavistaLogo"
+            style="
+              margin: 32px 24px;
+              display: block;
+              max-width: 152px;
+              height: 31px;
+            "
+          />
+        </td>
+      </tr>
+
+      <!-- Header -->
+      <tr>
+        <td>
+          <h2
+            style="
+              margin: 32px 24px 24px 24px;
+              font-size: 24px;
+              color: #1e1a1b;
+              text-align: left;
+              font-weight: 500;
+            "
+          >
+            An Update on Your Application to Cavista Technologies
+          </h2>
+        </td>
+      </tr>
+
+      <!-- Body Content -->
+      <tr>
+        <td>
+          <p
+            style="
+              margin: 0 24px 24px 24px;
+              font-size: 16px;
+              color: #4a4041;
+              line-height: 24px;
+            "
+          >
+            Hi {firstName},<br /><br />
+
+            Thank you for taking the time to apply for the {role} position at
+            Cavista Technologies.. <br />
+            <br />
+
+            We appreciate the time and effort you put into your application and
+            the opportunity to learn more about your experience. <br />
+            <br />
+            After careful consideration, we've decided not to move forward with
+            your application for this particular opportunity. <br />
+            <br />
+
+            Thank you again for your interest in Cavista Technologies. We wish
+            you continued success, and we hope our paths cross again. <br />
+            <br />
+          </p>
+
+          <p style="margin: 0 24px 24px 24px; font-size: 16px; color: #4a4041">
+            Best regards, <br />
+            <span style="color: #4a4041; font-weight: 600"
+              >Cavista Technologies Talent Acquisition Team</span
+            >
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="padding: 0 24px">
+          <div
+            style="
+              background-color: #1e1a1b;
+              padding: 32px 24px;
+              border-radius: 8px;
+              text-align: left;
+              color: #fcfcfc;
+            "
+          >
+            <p>
+              This mail was sent to you because you applied for a role at
+              Cavista Technologies.
+            </p>
+            <p>
+              Got questions? Reply to this mail or write to <br />
+              <a
+                style="text-decoration: underline"
+                href="mailto:talentteamng@axxess.com"
+                >talentteamng@axxess.com
+              </a>
+            </p>
+
+            <p>© {{year}} All rights reserved.</p>
+
+            <table
+              width="100%"
+              border="0"
+              cellspacing="0"
+              cellpadding="0"
+              style="margin-top: 32px"
+            >
+              <tr>
+                <td
+                  align="left"
+                  valign="middle"
+                  style="
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    color: #5d5152;
+                  "
+                >
+                  <div>
+                    <a
+                      href="https://www.x.com/cavistatech"
+                      style="margin: 0 8px; text-decoration: none"
+                    >
+                      <img
+                        src="{hostUrl}/Images/Employers/TwitterLogo.png"
+                        alt="Twitter"
+                        style="width: 32px; height: 32px"
+                      />
+                    </a>
+                    <a
+                      href="https://web.facebook.com/cavistatech"
+                      style="margin: 0 8px; text-decoration: none"
+                    >
+                      <img
+                        src="{hostUrl}/Images/Icons/FacebookLogo.png"
+                        alt="Facebook"
+                        style="width: 32px; height: 32px"
+                      />
+                    </a>
+                    <a
+                      href="https://www.instagram.com/cavistatech"
+                      style="margin: 0 8px; text-decoration: none"
+                    >
+                      <img
+                        src="{hostUrl}/Images/Icons/InstagramLogo.png"
+                        alt="Instagram"
+                        style="width: 32px; height: 32px"
+                      />
+                    </a>
+                    <a
+                      href="https://www.linkedin.com/company/cavista"
+                      style="margin: 0 8px; text-decoration: none"
+                    >
+                      <img
+                        src="{hostUrl}/Images/Icons/LinkedInLogo.png"
+                        alt="LinkedIn"
+                        style="width: 32px; height: 32px"
+                      />
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
