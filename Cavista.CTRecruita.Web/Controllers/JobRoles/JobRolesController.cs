@@ -6,6 +6,7 @@ using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Cavista.CTRecruita.Web.RequestModels.ApplicationModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace Cavista.CTRecruita.Web.Controllers.JobRoles
 {
@@ -38,14 +39,26 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
             return PrepareResponse(response);
         }
         [HttpGet("{id}/applicants")]
-        public async Task<IActionResult> GetJobApplicants(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
+        public async Task<IActionResult> GetJobApplicants(long id, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, [FromQuery] bool export = false)
         {
             var response = await _mediator.Send(new GetJobRoleApplicantsQuery
             {
                 JobRoleId= id,
                 PageNumber = pageNumber,
-                PageSize = pageSize
+                PageSize = pageSize,
+                Export = export
             });
+
+            if (export && response.Data != null)
+            {
+                var json = JsonSerializer.Serialize(response.Data);
+                var payload = JsonSerializer.Deserialize<ExportPayload>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                var bytes = Convert.FromBase64String(payload.FileBytes);
+                return File(bytes, payload.ContentType, payload.FileName);
+            }
             return PrepareResponse(response);
         }
 
@@ -127,5 +140,11 @@ namespace Cavista.CTRecruita.Web.Controllers.JobRoles
             return PrepareResponse(departments);
         }
 
+        private class ExportPayload
+        {
+            public string FileName { get; set; }
+            public string ContentType { get; set; }
+            public string FileBytes { get; set; }
+        }
     }
 }
