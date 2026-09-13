@@ -32,6 +32,8 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public int NumberOfOpenings { get; set; }
         public int SlaTargetDays { get; set; }
         public DateTime? TargetHireDate { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? PublishedAt { get; set; }
         public int DaysOpen { get; set; }
         public int SlaPercent { get; set; }
         public bool IsSlaBreached { get; set; }
@@ -73,18 +75,26 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     NumberOfOpenings = x.NumberOfOpenings,
                     SlaTargetDays = x.SlaTargetDays,
                     TargetHireDate = x.TargetHireDate,
-                    DaysOpen = (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays,
-                    SlaPercent = x.SlaTargetDays <= 0 
-                       ? 0
-                       : ((int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays * 100 / x.SlaTargetDays > 100
-                       ? 100
-                       : (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays * 100 / x.SlaTargetDays),
-                    IsSlaBreached = x.SlaTargetDays > 0 && (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays > x.SlaTargetDays,
+                    CreatedAt = x.CreatedAt,
+                    PublishedAt = x.PublishedAt,
                     ApplicantsCount = x.Applications.Count()
                 })
                 .PaginateAsync(request.Page, request.PageLength);
+            var now = DateTime.UtcNow;
+            foreach (var role in roles.Items)
+            {
+                var start = role.PublishedAt ?? role.CreatedAt;
+                var daysOpen = (int)(now - start).TotalDays;
+                if (daysOpen < 0) daysOpen = 0;
+                role.DaysOpen = daysOpen;
+                if (role.SlaTargetDays > 0)
+                {
+                    var pct = daysOpen * 100 / role.SlaTargetDays;
+                    role.SlaPercent = pct > 100 ? 100 : pct;
+                    role.IsSlaBreached = daysOpen > role.SlaTargetDays;
+                }
+            }
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
         }
-
     }
 }
