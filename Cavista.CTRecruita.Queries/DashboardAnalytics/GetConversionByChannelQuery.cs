@@ -1,5 +1,6 @@
 ﻿using Cavista.CTRecruita.Data.Contexts;
 using Cavista.CTRecruita.Data.Entities.Enums;
+using Cavista.CTRecruita.Data.Entities.Enums.EnumExtensions;
 using Cavista.CTRecruita.Utilities.ApiResponse;
 using Cavista.CTRecruita.Utilities.Mediator.Contracts;
 using Microsoft.AspNetCore.Http;
@@ -14,6 +15,7 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
     public class ChannelConversionModel
     {
         public ApplicationSource Source { get; set; }
+        public string SourceStr { get; set; }
         public int Applied { get; set; }
         public int Hired { get; set; }
         public double ConversionRate { get; set; }
@@ -53,6 +55,7 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
                 .Select(x => new ChannelConversionModel
                 {
                     Source = x.Source,
+                    SourceStr = x.Source.GetDescription(),
                     Applied = x.Applied,
                     Hired = x.Hired,
                     ConversionRate = x.Applied == 0
