@@ -68,7 +68,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
             {
                 var fields = await _context.FormFields
                     .AsNoTracking()
-                    .Where(f => f.ApplicationForm.JobRoleId == request.JobRoleId && !f.IsStandard)
+                    .Where(f => f.ApplicationForm.JobRoleId == request.JobRoleId)
                     .OrderBy(f => f.SortOrder)
                     .Select(f => new { f.Id, f.Label, f.FieldType })
                     .ToListAsync(cancellationToken);
@@ -90,11 +90,21 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                {
                    "Candidate Name", "Email", "Phone Number", "Stage", "Status", "Source", "Applied On"
                };
+                var fixedColumns = new HashSet<string>(headers, StringComparer.OrdinalIgnoreCase)
+                {
+                    "Full Name",
+                    "Name",
+                    "Email Address",
+                    "Phone",
+                    "Phone No",
+                    "Mobile Number"
+                };
                 var fieldColumns = new Dictionary<long, string>();
                 var fileColumns = new HashSet<string>();
                 foreach (var f in fields)
                 {
                     var label = string.IsNullOrWhiteSpace(f.Label) ? $"Field {f.Id}" : f.Label.Trim();
+                    if (fixedColumns.Contains(label)) continue;
                     var name = label;
                     var suffix = 2;
                     while (headers.Contains(name)) name = $"{label} ({suffix++})";
@@ -117,6 +127,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     };
                     foreach (var f in fields)
                     {
+                        if (!fieldColumns.TryGetValue(f.Id, out var column)) continue;
                         var values = r.Answers
                             .Where(a => a.FormFieldId == f.Id && !string.IsNullOrWhiteSpace(a.Value))
                             .Select(a =>
@@ -127,7 +138,7 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                                 return v;
                             })
                             .ToList();
-                        row[fieldColumns[f.Id]] = values.Count == 1
+                        row[column] = values.Count == 1
                             ? values[0]
                             : string.Join(", ", values);
                     }
