@@ -18,7 +18,6 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public int Page { get; set; } = 1;
         public int PageLength { get; set; } = 10;
     }
-        
     public class GetOpenRolesModel
     {
         public long Id { get; set; }
@@ -33,6 +32,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public int NumberOfOpenings { get; set; }
         public int SlaTargetDays { get; set; }
         public DateTime? TargetHireDate { get; set; }
+        public int DaysOpen { get; set; }
+        public int SlaPercent { get; set; }
+        public bool IsSlaBreached { get; set; }
         public int PipelineCount { get; set; }
         public int ApplicantsCount { get; set; }
     }
@@ -55,10 +57,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                 query = query.Where(x => x.DepartmentId == request.DepartmentId.Value);
             if (request.Status.HasValue)
                 query = query.Where(x => x.Status == request.Status.Value);
-
             var roles = await query
                 .OrderByDescending(x => x.CreatedAt)
-                .Select(x => new GetRoleDetailQueryModel
+                .Select(x => new GetOpenRolesModel
                 {
                     Id = x.Id,
                     Title = x.Title,
@@ -71,18 +72,19 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     PriorityStr = x.Priority.GetDescription(),
                     NumberOfOpenings = x.NumberOfOpenings,
                     SlaTargetDays = x.SlaTargetDays,
-                    RecruiterName = x.RecruiterName,
-                    HiringManagerName = x.HiringManagerName,
-                    HiringManagerEmail = x.HiringManagerEmail,
-                    //SlaPercent = x.SlaTargetDays,
                     TargetHireDate = x.TargetHireDate,
-                    //PipelineCount = x.Applications.Count(a => a.Status == ApplicationStatus.Active),
+                    DaysOpen = (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays,
+                    SlaPercent = x.SlaTargetDays <= 0 
+                       ? 0
+                       : ((int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays * 100 / x.SlaTargetDays > 100
+                       ? 100
+                       : (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays * 100 / x.SlaTargetDays),
+                    IsSlaBreached = x.SlaTargetDays > 0 && (int)(DateTime.UtcNow - (x.PublishedAt ?? x.CreatedAt)).TotalDays > x.SlaTargetDays,
                     ApplicantsCount = x.Applications.Count()
                 })
                 .PaginateAsync(request.Page, request.PageLength);
-
             return new ApiResponse(false, (int)StatusCodes.Status200OK, "Roles retrieved", roles);
         }
-    }
 
+    }
 }
