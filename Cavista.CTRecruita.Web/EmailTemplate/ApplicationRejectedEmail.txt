@@ -33,7 +33,7 @@
         <td>
           <!-- <img src="{{logoUrl}}" alt="Logo" style="margin:32px 24px; display:block; max-width:152px; height: 31px;" /> -->
           <img
-            src="{hostUrl}/Images/Employers/cavista-logo.jpg"
+            src="{hostUrl}/Images/Employers/cavista-logo.png"
             alt="CavistaLogo"
             style="
               margin: 32px 24px;
@@ -125,7 +125,7 @@
               </a>
             </p>
 
-            <p>© {{year}} All rights reserved.</p>
+            <p>&copy; {year} All rights reserved.</p>
 
             <table
               width="100%"
@@ -150,7 +150,7 @@
                       style="margin: 0 8px; text-decoration: none"
                     >
                       <img
-                        src="{hostUrl}/Images/Employers/TwitterLogo.png"
+                        src="{hostUrl}/Images/Icons/TwitterLogo.png"
                         alt="Twitter"
                         style="width: 32px; height: 32px"
                       />
