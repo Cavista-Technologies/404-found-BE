@@ -29,6 +29,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
         public string StatusStr { get; set; }
         public JobPriority Priority { get; set; }
         public string PriorityStr { get; set; }
+        public string RecruiterName { get; set; }
+        public string HiringManagerName { get; set; }
+        public string HiringManagerEmail { get; set; }
         public int NumberOfOpenings { get; set; }
         public int SlaTargetDays { get; set; }
         public DateTime? TargetHireDate { get; set; }
@@ -71,6 +74,9 @@ namespace Cavista.CTRecruita.Queries.JobRoles
                     Status = x.Status,
                     StatusStr = x.Status.GetDescription(),
                     Priority = x.Priority,
+                    RecruiterName = x.RecruiterName,
+                    HiringManagerName = x.HiringManagerName,
+                    HiringManagerEmail = x.HiringManagerEmail,
                     PriorityStr = x.Priority.GetDescription(),
                     NumberOfOpenings = x.NumberOfOpenings,
                     SlaTargetDays = x.SlaTargetDays,
