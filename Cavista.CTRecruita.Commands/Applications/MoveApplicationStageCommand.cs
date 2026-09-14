@@ -38,21 +38,30 @@ namespace Cavista.CTRecruita.Commands.Applications
         {
             var applicationCandidate = await _context.ApplicationCandidates
                 .Include(x => x.StageHistory)
+                .Include(x => x.Application)
+                    .ThenInclude(a => a.JobRole)
                 .FirstOrDefaultAsync(x => x.Id == request.ApplicationCandidateId, cancellationToken);
             if (applicationCandidate == null)
             {
-                return new ApiResponse( true, StatusCodes.Status404NotFound, "Candidate application not found");
+                return new ApiResponse(true, StatusCodes.Status404NotFound, "Candidate application not found");
             }
             var fromStage = applicationCandidate.Stage;
             if (fromStage == request.ToStage)
             {
-                return new ApiResponse( true, StatusCodes.Status400BadRequest, $"Candidate is already in the {request.ToStage} stage");
+                return new ApiResponse(true, StatusCodes.Status400BadRequest, $"Candidate is already in the {request.ToStage} stage");
             }
             applicationCandidate.Stage = request.ToStage;
+            var jobRole = applicationCandidate.Application?.JobRole;
             switch (request.ToStage)
             {
                 case ApplicationStage.Hired:
                     applicationCandidate.Status = ApplicationStatus.Hired;
+                    if (jobRole != null)
+                    {
+                        jobRole.Status = JobStatus.Filled;
+                        jobRole.FilledAt = DateTime.UtcNow;
+                        jobRole.UpdatedAt = DateTime.UtcNow;
+                    }
                     break;
                 case ApplicationStage.Rejected:
                     applicationCandidate.Status = ApplicationStatus.Rejected;
@@ -62,6 +71,12 @@ namespace Cavista.CTRecruita.Commands.Applications
                     break;
                 default:
                     applicationCandidate.Status = ApplicationStatus.Active;
+                    if (fromStage == ApplicationStage.Hired && jobRole != null)
+                    {
+                        jobRole.Status = JobStatus.Open;
+                        jobRole.FilledAt = null;
+                        jobRole.UpdatedAt = DateTime.UtcNow;
+                    }
                     break;
             }
             applicationCandidate.StageHistory.Add(
@@ -76,8 +91,8 @@ namespace Cavista.CTRecruita.Commands.Applications
                 });
             await _context.SaveChangesAsync(cancellationToken);
             _backgroundJobClient.Enqueue<MoveApplicationStageHandler>(
-                handler => handler.SendApplicationStageMovedEmail( applicationCandidate.Id, fromStage, request.ToStage, request.Reason));
-            return new ApiResponse( false, StatusCodes.Status200OK, "Candidate moved successfully");
+                handler => handler.SendApplicationStageMovedEmail(applicationCandidate.Id, fromStage, request.ToStage, request.Reason));
+            return new ApiResponse(false, StatusCodes.Status200OK, "Candidate moved successfully");
         }
         public async Task SendApplicationStageMovedEmail(long applicationCandidateId, ApplicationStage fromStage, ApplicationStage toStage, string? reason)
         {

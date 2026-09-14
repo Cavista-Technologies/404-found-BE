@@ -16,7 +16,7 @@ namespace Cavista.CTRecruita.Commands.Applications
     public class SubmitApplicationCommand : IRequest<ApiResponse>
     {
         public string Slug { get; set; }
-        public ApplicationSource Source { get; set; } = ApplicationSource.Direct;
+        public ApplicationSource Source { get; set; }
         public string FullName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
@@ -144,6 +144,7 @@ namespace Cavista.CTRecruita.Commands.Applications
                 Stage = ApplicationStage.Applied,
                 Status = ApplicationStatus.Active,
                 AppliedOn = DateTime.UtcNow,
+                Source = request.Source,
                 Answers = answers
                     .Where(a => fieldsById.TryGetValue(a.FormFieldId, out var field) && !field.IsStandard)
                     .Select(a => new ApplicationAnswer
