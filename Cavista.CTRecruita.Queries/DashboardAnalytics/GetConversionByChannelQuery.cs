@@ -75,7 +75,24 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
                 .OrderByDescending(x => x.ConversionRate)
                 .ToList();
             string? insight = null;
-            if (ranked.Count >= 2 && ranked[1].ConversionRate > 0)
+            if (ranked.Count == 0)
+            {
+                insight = "No applications yet — insights will appear once candidates start applying.";
+            }
+            else if (ranked[0].ConversionRate == 0)
+            {
+                var totalApplied = ranked.Sum(x => x.Applied);
+                insight =
+                    $"{totalApplied} application(s) across {ranked.Count} channel(s), " +
+                    $"but no hires yet — conversion insights will appear after your first hire.";
+            }
+            else if (ranked.Count == 1 || ranked[1].ConversionRate == 0)
+            {
+                insight =
+                    $"{ranked[0].SourceStr} is your only converting channel so far, " +
+                    $"at {ranked[0].ConversionRate}%.";
+            }
+            else
             {
                 var multiplier = Math.Round(
                     ranked[0].ConversionRate / ranked[1].ConversionRate,
@@ -84,12 +101,7 @@ namespace Cavista.CTRecruita.Queries.DashboardAnalytics
                     $"{ranked[0].SourceStr} converts at {ranked[0].ConversionRate}% — " +
                     $"{multiplier}x better than {ranked[1].SourceStr}. " +
                     $"Invest in the {ranked[0].SourceStr} program.";
-            }
-            else if (ranked.Count == 1)
-            {
-                insight =
-                    $"{ranked[0].SourceStr} is your only converting channel so far, " +
-                    $"at {ranked[0].ConversionRate}%.";
+
             }
             var result = new ConversionByChannelResultModel
             {
